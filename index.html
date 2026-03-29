@@ -53,12 +53,31 @@
       header h1 { font-size: 1.4em; }
     }
 
-    #productos { 
+   #productos { 
   display: grid; 
-  grid-template-columns: repeat(3, 1fr); 
-  gap: 10px; 
+  /* TRUCO 1: Ajusta las columnas automáticamente para llenar el ancho */
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
+  gap: 15px; /* Un poco más de espacio entre helados para que respire */
+  
+  /* TRUCO 2: Centra todo el bloque de la cuadrícula */
   justify-content: center; 
-  padding: 10px;
+  align-content: start;
+  
+  /* TRUCO 3: Espacio uniforme a los lados */
+  padding: 15px; 
+  max-width: 100%; /* Que no se salga de la pantalla */
+  box-sizing: border-box; /* Asegura que el padding no estire la pantalla */
+}
+
+/* Reducimos un poco la tarjeta para que quepan 3 bien centradas */
+.card { 
+  background: white; 
+  border-radius: 12px; 
+  padding: 8px; 
+  width: auto; /* Usar el ancho del grid */
+  text-align: center; 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+  border: 1px solid #eee;
 }
 
 .card { 
