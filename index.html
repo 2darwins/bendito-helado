@@ -67,46 +67,42 @@
 
 .card { 
   background: white; 
-  border-radius: 6px; 
-  padding: 5px; 
+  border-radius: 8px; 
+  padding: 8px; 
   width: 100% !important; 
   text-align: center; 
   border: 1px solid #eee;
   box-sizing: border-box; 
-  /* ✨ ESTO ORDENA COMO TU DIBUJO ✨ */
-  height: 125px; 
+  /* ✨ ORDEN VERTICAL: Nombre arriba, Imagen centro, Precio abajo ✨ */
+  height: 140px; 
   display: flex;
   flex-direction: column; 
   justify-content: space-between; 
-  align-items: center; 
+  align-items: center;
 }
+.card strong { 
+  font-size: 0.75em; /* Nombre arriba */
+  line-height: 1.1;
+  display: block;
+  margin-bottom: 4px;
+}
+
 .card img { 
   width: 100%; 
-  height: 45px; /* Foto pequeña arriba */
+  height: 55px; /* Imagen en el centro */
   object-fit: cover; 
-  border-radius: 4px; 
-}
-
-.card strong { 
-  font-size: 0.7em; /* Nombre en el medio */
-  line-height: 1.1;
-  display: flex;
-  align-items: center;
-  flex-grow: 1;
-}
-
-/* ✨ ESTO HACE QUE EL PRECIO SE VEA ABAJO ✨ */
-.card span {
-  font-size: 0.8em;
-  font-weight: bold;
-  color: #e91e63;
-  margin-top: auto;
+  border-radius: 4px;
 }
 
 .card span {
-  font-size: 0.7em;
+  font-size: 0.8em; /* Precio abajo */
   font-weight: bold;
   color: #e91e63;
+}
+
+/* Ocultamos el botón eliminar para que no tape nada */
+.card button {
+  display: none !important;
 }
   /* TRUCO 2: Centra todo el bloque de la cuadrícula */
   justify-content: center; 
