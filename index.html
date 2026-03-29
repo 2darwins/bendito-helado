@@ -85,20 +85,29 @@
       color: var(--rosa-principal);
     }
 
-    /* BOTÓN ELIMINAR (OCULTO POR DEFECTO) */
-    .card button { display: none !important; }
-    
-    .modo-config #productos .card button {
-      display: block !important;
-      background: #ff4444;
-      color: white;
-      border: none;
-      padding: 4px;
-      border-radius: 4px;
-      font-size: 0.7em;
-      width: 100%;
-      margin-top: 2px;
-    }
+  /* --- BOTÓN ELIMINAR (OCULTO POR DEFECTO) --- */
+.card button { 
+  display: none !important; 
+}
+
+/* Solo se muestra cuando abres configuración (SIN ESPACIO entre el ID y la clase) */
+#productos.modo-config .card button {
+  display: block !important;
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 0.8em;
+  width: 100%;
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+/* Ajuste opcional: hace la tarjeta un poquito más alta para que quepa el botón */
+#productos.modo-config .card {
+  height: 190px !important;
+}
 
     /* CARRITO Y COBRO */
     #carrito { list-style: none; padding: 0; }
