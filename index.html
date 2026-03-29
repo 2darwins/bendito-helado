@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Bendito Helado POS</title>
   <link rel="icon" type="image/png" href="logo.jpg">
-<link rel="apple-touch-icon" href="logo.jpg">
+  <link rel="apple-touch-icon" href="logo.jpg">
   <style>
     :root {
       --rosa-principal: #e91e63;
@@ -16,7 +16,6 @@
       --fuente-redonda: 'Poppins', sans-serif;
     }
 
-    /* Ajuste para que en móviles se pueda hacer scroll */
     body { 
       font-family: var(--fuente-redonda), Arial; 
       padding: 0; margin: 0; 
@@ -24,279 +23,162 @@
       height: 100vh; 
       display: flex; 
       flex-direction: column; 
+      overflow-x: hidden; 
+    }
+
+    header { background-color: var(--rosa-principal); color: white; padding: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    header h1 { margin: 0; font-size: 1.5em; text-transform: uppercase; }
+
+    .app-container { display: flex; flex: 1; flex-direction: column; overflow-y: auto; }
+
+    /* SECCIONES */
+    .col-productos { padding: 10px; background: white; }
+    .col-carrito { padding: 15px; background: white; border-top: 2px solid #eee; }
+    .col-cobro { padding: 15px; background: #fffde7; border-top: 2px solid #eee; }
+
+    /* ✨ DISEÑO MOSAICO 3 COLUMNAS ✨ */
+    #productos { 
+      display: grid !important; 
+      grid-template-columns: repeat(3, 1fr) !important; 
+      gap: 8px; 
+      width: 100%;
+      box-sizing: border-box;
+      padding: 5px;
+    }
+
+    /* ✨ TARJETA ORDENADA: Nombre > Imagen > Precio ✨ */
+    .card { 
+      background: white; 
+      border-radius: 10px; 
+      padding: 8px; 
+      text-align: center; 
+      border: 1px solid #ddd;
+      box-sizing: border-box; 
+      height: 170px; /* Altura fija para que nada se pise */
+      display: flex;
+      flex-direction: column; 
+      justify-content: space-between; 
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .card strong { 
+      font-size: 0.75em; 
+      color: #333;
+      height: 32px; 
       overflow: hidden; 
+      display: flex;
+      align-items: center;
+      line-height: 1.1;
     }
 
-    header { background-color: var(--rosa-principal); color: white; padding: 10px 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    header h1 { margin: 0; font-size: 1.8em; text-transform: uppercase; letter-spacing: 2px; }
-
-    .app-container { display: flex; flex: 1; overflow: hidden; }
-    
-    /* COLUMNAS BASE */
-    .col-productos { flex: 2; background-color: white; padding: 20px; overflow-y: auto; border-right: 2px solid #eee; }
-    .col-carrito { flex: 1.2; background-color: white; padding: 20px; display: flex; flex-direction: column; border-right: 2px solid #eee; }
-    .col-cobro { flex: 1.2; background-color: #fffde7; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
-
-    /* RESPONSIVO PARA TABLET Y CELULAR */
-    @media (max-width: 900px) {
-      body { overflow-y: auto; height: auto; }
-      .app-container { flex-direction: column; overflow: visible; }
-      .col-productos, .col-carrito, .col-cobro { 
-        flex: none; 
-        width: 100%; 
-        border-right: none; 
-        border-bottom: 2px solid #eee; 
-        height: auto;
-        overflow: visible;
-      }
-      .card { width: 42% !important; margin: 0 auto; } /* 2 helados por fila */
-      header h1 { font-size: 1.4em; }
+    .card img { 
+      width: 100%; 
+      height: 75px; 
+      object-fit: cover; 
+      border-radius: 6px; 
     }
 
-  #productos { 
-  display: grid !important; 
-  /* Forzamos 3 columnas para que sean cuadritos pequeños */
-  grid-template-columns: repeat(3, 1fr) !important; 
-  gap: 4px; /* Casi pegados */
-  padding: 5px; 
-  width: 100% !important;
-  max-width: 100%; 
-  margin: 0; 
-  box-sizing: border-box;
-}
-
-.card { 
-  background: white; 
-  border-radius: 8px; 
-  padding: 8px; 
-  width: 100% !important; 
-  text-align: center; 
-  border: 1px solid #eee;
-  box-sizing: border-box; 
-  /* ✨ DISTRIBUCIÓN VERTICAL ✨ */
-  height: 160px; /* Un poco más alto para que quepa todo sin pisarse */
-  display: flex;
-  flex-direction: column; 
-  justify-content: space-between; /* Empuja el nombre arriba y el precio abajo */
-  align-items: center;
-  overflow: hidden;
-}
-/* 1. EL NOMBRE (ARRIBA) */
-.card strong { 
-  font-size: 0.75em; 
-  line-height: 1.1;
-  display: block;
-  height: 30px; /* Espacio reservado para el nombre */
-  margin-bottom: 5px;
-}
-
-/* 2. LA IMAGEN (EN EL MEDIO) */
-.card img { 
-  width: 100%; 
-  height: 70px; /* Tamaño medio para distinguir el helado */
-  object-fit: cover; 
-  border-radius: 4px;
-}
-
-/* 3. EL PRECIO (ABAJO) */
-.card span {
-  font-size: 0.85em;
-  font-weight: bold;
-  color: #e91e63;
-  margin-top: 5px;
-}
-/* Ocultamos el botón eliminar para que no tape nada */
-.card button {
-  display: none !important;
-}
-  /* TRUCO 2: Centra todo el bloque de la cuadrícula */
-  justify-content: center; 
-  align-content: start;
-  
-  /* TRUCO 3: Espacio uniforme a los lados */
-  padding: 15px; 
-  max-width: 100%; /* Que no se salga de la pantalla */
-  box-sizing: border-box; /* Asegura que el padding no estire la pantalla */
-}
-
-/* Reducimos un poco la tarjeta para que quepan 3 bien centradas */
-.card { 
-  background: white; 
-  border-radius: 12px; 
-  padding: 8px; 
-  width: auto; /* Usar el ancho del grid */
-  text-align: center; 
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-  border: 1px solid #eee;
-}
-
-.card { 
-  background: white; 
-  border-radius: 12px; 
-  padding: 8px; 
-  width: 100%;    /* IMPORTANTE: Esto hace que use todo el ancho del cuadro */
-  margin: 0 auto; /* Esto lo centra */
-  text-align: center; 
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-  border: 1px solid #eee;
-  box-sizing: border-box; 
-}
-
-.card img { 
-  width: 100%; 
-  height: 70px; 
-  object-fit: cover; 
-  border-radius: 8px; 
-}
-
-.card strong { 
-  font-size: 0.8em; 
-  display: block; 
-  margin-top: 5px;
-}
-    
-    .card { background: white; border-radius: 20px; padding: 15px; width: 160px; text-align: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; border: 2px solid transparent; }
-    .card:hover { transform: translateY(-5px); border-color: var(--rosa-principal); }
-    .card img { width: 100%; max-width: 140px; height: 140px; object-fit: cover; border-radius: 15px; margin-bottom: 10px; }
-    .card strong { display: block; font-size: 1.1em; color: #333; }
-
-    #carrito { list-style: none; padding: 0; flex: 1; min-height: 100px; }
-    #carrito li { background: #fef1f6; margin-bottom: 10px; padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--rosa-principal); }
-    
-    .total-seccion { border-top: 3px solid var(--amarillo-dorado); background: #fffde7; padding: 15px; border-radius: 10px; margin-top: auto; }
-    .total-monto { font-size: 2.2em; color: #333; font-weight: bold; }
-
-    select, input { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #ddd; font-size: 1.1em; margin-bottom: 15px; box-sizing: border-box; }
-
-    .btn-pago-rapido { display: flex; gap: 10px; margin-bottom: 20px; }
-    .btn-pago { flex: 1; background-color: white; border: 2px solid var(--amarillo-dorado); padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
-
-    .btn-cobrar { background-color: var(--rosa-principal); color: white; border: none; padding: 20px; border-radius: 15px; width: 100%; font-size: 1.4em; font-weight: bold; cursor: pointer; }
-    #historial { list-style: none; padding: 0; max-height: 200px; overflow-y: auto; background: white; border-radius: 10px; padding: 10px; }
-    
-    .btn-config { position: fixed; bottom: 10px; right: 10px; background: rgba(255,255,255,0.9); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid var(--rosa-principal); z-index: 100; font-size: 24px; }
-
-    .btn-eliminar { background-color: #ff4444; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 8px; width: 100%; }
-
-    .btn-reporte { background-color: #4CAF50; color: white; border: none; padding: 12px; margin: 5px; border-radius: 5px; cursor: pointer; font-weight: bold; flex: 1; }
-
-    .btn-limpiar { background-color: #333; color: white; border: none; padding: 12px; margin: 10px 5px; border-radius: 5px; cursor: pointer; width: 95%; }
-
-    /* Ajuste para el panel de configuración en móviles */
-    #config { 
-      display:none; position:fixed; top:10px; left:10px; right:10px; bottom:10px; 
-      background:white; padding:20px; border-radius:20px; 
-      box-shadow:0 10px 50px rgba(0,0,0,0.3); z-index:200; overflow-y:auto; 
+    .card span {
+      font-size: 0.9em;
+      font-weight: bold;
+      color: var(--rosa-principal);
     }
-    .config-grid { display: flex; gap: 30px; margin-top: 20px; }
-    @media (max-width: 700px) {
-      .config-grid { flex-direction: column; }
-    }
-    /* Ocultar botones de eliminar en la pantalla principal */
-.card button {
-  display: none !important;
-}
 
-/* Solo se muestran cuando activamos el modo configuración */
-.modo-config .card button {
-  display: block !important;
-  margin: 5px auto;
-  background-color: #ff4444;
-  color: white;
-  border: none;
-  padding: 5px;
-  border-radius: 4px;
-  font-size: 0.7em;
-}
+    /* BOTÓN ELIMINAR (OCULTO POR DEFECTO) */
+    .card button { display: none !important; }
+    
+    .modo-config #productos .card button {
+      display: block !important;
+      background: #ff4444;
+      color: white;
+      border: none;
+      padding: 4px;
+      border-radius: 4px;
+      font-size: 0.7em;
+      width: 100%;
+      margin-top: 2px;
+    }
+
+    /* CARRITO Y COBRO */
+    #carrito { list-style: none; padding: 0; }
+    #carrito li { background: #fef1f6; margin-bottom: 8px; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; border-left: 4px solid var(--rosa-principal); }
+    
+    .total-seccion { background: #fffde7; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid var(--amarillo-dorado); }
+    .total-monto { font-size: 2em; font-weight: bold; }
+
+    input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 10px; font-size: 1em; }
+    .btn-cobrar { background: var(--rosa-principal); color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-size: 1.2em; font-weight: bold; }
+
+    .btn-config { position: fixed; bottom: 15px; right: 15px; background: white; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--rosa-principal); z-index: 100; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+
+    #config { display:none; position:fixed; top:5%; left:5%; right:5%; bottom:5%; background:white; padding:20px; border-radius:15px; box-shadow:0 0 50px rgba(0,0,0,0.5); z-index:200; overflow-y:auto; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>BENDITO HELADO POS</h1>
+  <h1>BENDITO HELADO</h1>
 </header>
 
 <div class="app-container">
   <div class="col-productos">
-    <h2>🍨 Menú de Helados</h2>
+    <h3>🍨 Menú de Helados</h3>
     <div id="productos"></div>
   </div>
 
   <div class="col-carrito">
-    <h2>🛒 Pedido Actual</h2>
+    <h3>🛒 Pedido</h3>
     <ul id="carrito"></ul>
     <div class="total-seccion">
-      <h3>TOTAL A PAGAR</h3>
+      <span>TOTAL</span>
       <div class="total-monto">$<span id="total">0</span></div>
     </div>
   </div>
 
   <div class="col-cobro">
-    <h2>💳 Cobro y Reportes</h2>
-    <label>Recibido:</label>
-    <input id="pago" type="number" placeholder="0" oninput="actualizarCambioManual()">
-
-    <div class="btn-pago-rapido">
-      <button class="btn-pago" onclick="pagoRapido(5000)">$5k</button>
-      <button class="btn-pago" onclick="pagoRapido(10000)">$10k</button>
-      <button class="btn-pago" onclick="pagoRapido(20000)">$20k</button>
-    </div>
-
-    <label>Método:</label>
-    <select id="metodo-pago" onchange="pagoRapido(this.value)">
+    <h3>💳 Pago</h3>
+    <input id="pago" type="number" placeholder="¿Con cuánto pagan?" oninput="actualizarCambioManual()">
+    <select id="metodo-pago">
         <option value="Efectivo">Efectivo</option>
         <option value="Nequi">Nequi</option>
         <option value="Daviplata">Daviplata</option>
     </select>
-    
-    <button onclick="procesarPago()" class="btn-cobrar">FINALIZAR VENTA</button>
-    <h3 style="text-align:center; color:#555;">Cambio: <span id="cambio">0</span></h3>
-
-    <hr style="border:1px solid #ddd; width:100%; margin: 20px 0;">
-    
-    <div style="display:flex; justify-content: space-between; align-items:center; background:white; padding:10px; border-radius:10px; margin-bottom:10px;">
-        <h3>🔥 Top: <span id="top" style="color:var(--rosa-principal)">...</span></h3>
-        <button onclick="exportarCSV()" style="background:#1d6f42; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Excel</button>
-    </div>
-    <ul id="historial"></ul>
+    <button onclick="procesarPago()" class="btn-cobrar">COBRAR AHORA</button>
+    <h3 style="text-align:center">Cambio: $<span id="cambio">0</span></h3>
   </div>
 </div>
 
 <div class="btn-config" onclick="toggleConfig()">⚙️</div>
 
 <div id="config">
-  <div style="display:flex; justify-content:space-between; align-items: center;">
-      <h2 style="margin:0;">⚙️ Configuración</h2>
-      <button onclick="toggleConfig()" style="background:var(--rosa-principal); color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:bold;">Cerrar X</button>
+  <div style="display:flex; justify-content:space-between">
+    <h2>⚙️ Configuración</h2>
+    <button onclick="toggleConfig()">Cerrar X</button>
   </div>
-  
-  <div class="config-grid">
-    <div style="flex:1;">
-      <h3>Agregar Nuevo Helado</h3>
-      <input type="text" id="nombre" placeholder="Nombre">
-      <input type="number" id="precio" placeholder="Precio">
-      <input type="file" id="imagen">
-      <button onclick="agregarProducto()" style="background:#007bff; color:white; border:none; padding:15px; border-radius:10px; width:100%; font-weight:bold; cursor:pointer;">Guardar Producto</button>
-      
-      <div style="margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px;">
-          <h3>📊 Reportes de Ganancias</h3>
-          <div style="display: flex; gap: 5px;">
-              <button onclick="verReporte('hoy')" class="btn-reporte">Hoy</button>
-              <button onclick="verReporte('mes')" class="btn-reporte">Este Mes</button>
-              <button onclick="verReporte('pasado')" class="btn-reporte">Mes Pasado</button>
-          </div>
-          <button onclick="limpiarHistorial()" class="btn-limpiar">⚠️ Cierre de Caja (Borrar Historial)</button>
-          <div id="resultado-reporte" style="text-align: center; margin-top: 15px; font-weight: bold; color: var(--rosa-principal); font-size: 1.2em;"></div>
-      </div>
-    </div>
-    
-    <div style="flex:1;">
-      <h3>Inventario Vendido (Unidades)</h3>
-      <ul id="cantidades" style="list-style:none; padding:0; background:#f9f9f9; padding:10px; border-radius:10px;"></ul>
-    </div>
+  <div style="margin-top:20px">
+    <h3>Agregar Producto</h3>
+    <input type="text" id="nombre" placeholder="Nombre del helado">
+    <input type="number" id="precio" placeholder="Precio">
+    <input type="file" id="imagen">
+    <button onclick="agregarProducto()" style="width:100%; padding:15px; background:#007bff; color:white; border:none; border-radius:10px">GUARDAR HELADO</button>
   </div>
 </div>
 
 <script src="renderer.js"></script>
+<script>
+  // Esta función asegura que el botón de eliminar aparezca solo en configuración
+  function toggleConfig() {
+    const configDiv = document.getElementById('config');
+    const productosDiv = document.getElementById('productos');
+    if (configDiv.style.display === 'none' || configDiv.style.display === '') {
+      configDiv.style.display = 'block';
+      productosDiv.classList.add('modo-config');
+    } else {
+      configDiv.style.display = 'none';
+      productosDiv.classList.remove('modo-config');
+    }
+  }
+</script>
 </body>
 </html>
