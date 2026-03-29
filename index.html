@@ -73,36 +73,38 @@
   text-align: center; 
   border: 1px solid #eee;
   box-sizing: border-box; 
-  /* ✨ ORDEN VERTICAL PERFECTO ✨ */
-  height: 150px; /* Un poco más de aire para que no se amontone */
+  /* ✨ DISTRIBUCIÓN VERTICAL ✨ */
+  height: 160px; /* Un poco más alto para que quepa todo sin pisarse */
   display: flex;
   flex-direction: column; 
-  justify-content: space-between; 
+  justify-content: space-between; /* Empuja el nombre arriba y el precio abajo */
   align-items: center;
-  position: relative; /* Para el botón de eliminar */
+  overflow: hidden;
 }
+/* 1. EL NOMBRE (ARRIBA) */
 .card strong { 
   font-size: 0.75em; 
-  line-height: 1.2;
+  line-height: 1.1;
   display: block;
-  width: 100%;
+  height: 30px; /* Espacio reservado para el nombre */
   margin-bottom: 5px;
-  color: #333;
 }
 
+/* 2. LA IMAGEN (EN EL MEDIO) */
 .card img { 
   width: 100%; 
-  height: 55px; /* Imagen en el centro */
+  height: 70px; /* Tamaño medio para distinguir el helado */
   object-fit: cover; 
   border-radius: 4px;
 }
 
+/* 3. EL PRECIO (ABAJO) */
 .card span {
-  font-size: 0.8em; /* Precio abajo */
+  font-size: 0.85em;
   font-weight: bold;
   color: #e91e63;
+  margin-top: 5px;
 }
-
 /* Ocultamos el botón eliminar para que no tape nada */
 .card button {
   display: none !important;
