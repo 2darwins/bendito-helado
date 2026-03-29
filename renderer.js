@@ -286,7 +286,10 @@ function mostrarHistorial() {
     lista.appendChild(item);
   });
 }
-
+// Esta función activa/desactiva los botones de eliminar
+document.querySelector('.settings-btn, #btnConfiguracion, .fa-gear')?.addEventListener('click', () => {
+    document.getElementById('productos').classList.toggle('modo-config');
+});
 window.toggleConfig = function() {
   let c = document.getElementById("config");
   c.style.display = (c.style.display === "none" || c.style.display === "") ? "block" : "none";
