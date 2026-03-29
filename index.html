@@ -73,18 +73,21 @@
   text-align: center; 
   border: 1px solid #eee;
   box-sizing: border-box; 
-  /* ✨ ORDEN VERTICAL: Nombre arriba, Imagen centro, Precio abajo ✨ */
-  height: 140px; 
+  /* ✨ ORDEN VERTICAL PERFECTO ✨ */
+  height: 150px; /* Un poco más de aire para que no se amontone */
   display: flex;
   flex-direction: column; 
   justify-content: space-between; 
   align-items: center;
+  position: relative; /* Para el botón de eliminar */
 }
 .card strong { 
-  font-size: 0.75em; /* Nombre arriba */
-  line-height: 1.1;
+  font-size: 0.75em; 
+  line-height: 1.2;
   display: block;
-  margin-bottom: 4px;
+  width: 100%;
+  margin-bottom: 5px;
+  color: #333;
 }
 
 .card img { 
