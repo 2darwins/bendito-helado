@@ -53,12 +53,18 @@
       header h1 { font-size: 1.4em; }
     }
 
-   #productos { 
-  display: grid; 
-  /* TRUCO 1: Ajusta las columnas automáticamente para llenar el ancho */
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
-  gap: 15px; /* Un poco más de espacio entre helados para que respire */
-  
+  #productos { 
+  display: grid !important; 
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important; 
+  gap: 12px;
+  justify-content: center;
+  align-items: start;
+  padding: 15px;
+  width: 100% !important;
+  max-width: 600px; /* Esto evita que en pantallas muy grandes se estiren demasiado */
+  margin: 0 auto;  /* Esto centra todo el bloque de helados en la pantalla */
+  box-sizing: border-box;
+}
   /* TRUCO 2: Centra todo el bloque de la cuadrícula */
   justify-content: center; 
   align-content: start;
