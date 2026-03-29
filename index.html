@@ -90,10 +90,12 @@
   background: white; 
   border-radius: 12px; 
   padding: 8px; 
-  width: auto; 
+  width: 100%;    /* IMPORTANTE: Esto hace que use todo el ancho del cuadro */
+  margin: 0 auto; /* Esto lo centra */
   text-align: center; 
   box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
   border: 1px solid #eee;
+  box-sizing: border-box; 
 }
 
 .card img { 
