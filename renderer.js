@@ -18,8 +18,8 @@ window.onload = function () {
   
   document.body.onclick = function() {
     let inputPago = document.getElementById("pago");
-    let metodo = document.getElementById("metodo-pago").value;
-    if (metodo === "Efectivo") {
+    let metodo = document.getElementById("metodo-pago") ? document.getElementById("metodo-pago").value : "Efectivo";
+    if (metodo === "Efectivo" && inputPago) {
         inputPago.readOnly = false;
         inputPago.disabled = false;
     }
@@ -67,7 +67,7 @@ window.agregarProducto = function() {
   reader.readAsDataURL(inputImagen.files[0]);
 };
 
-// --- ✨ AJUSTE EN MOSTRAR PRODUCTOS (ORDEN Y BOTÓN) ✨ ---
+// --- ✨ MOSTRAR PRODUCTOS (ORDEN Y BOTÓN) ✨ ---
 function mostrarProductos() {
   let contenedor = document.getElementById("productos");
   if (!contenedor) return;
@@ -77,6 +77,7 @@ function mostrarProductos() {
     let div = document.createElement("div");
     div.className = "card";
     // Ordenamos: Nombre arriba, Imagen centro, Precio abajo
+    // El botón tiene la clase "btn-eliminar" para que tu CSS lo oculte/muestre
     div.innerHTML = `
       <strong>${p.nombre}</strong>
       <img src="${p.imagen}">
@@ -114,7 +115,7 @@ function actualizarCarrito() {
     lista.appendChild(item);
   });
   document.getElementById("total").innerText = total.toLocaleString();
-  window.actualizarCambioManual();
+  if(window.actualizarCambioManual) window.actualizarCambioManual();
 }
 
 function eliminarDelCarrito(index) {
@@ -127,6 +128,7 @@ function eliminarDelCarrito(index) {
 window.actualizarCambioManual = function() {
   let inputPago = document.getElementById("pago");
   let elCambio = document.getElementById("cambio");
+  if(!inputPago || !elCambio) return;
   let valorRecibido = parseFloat(inputPago.value) || 0;
 
   if (valorRecibido >= total && total > 0) {
@@ -140,6 +142,8 @@ window.actualizarCambioManual = function() {
 window.pagoRapido = function(valor) {
   let inputPago = document.getElementById("pago");
   let selectorMetodo = document.getElementById("metodo-pago");
+  if(!inputPago || !selectorMetodo) return;
+  
   inputPago.disabled = false;
   inputPago.readOnly = false;
   inputPago.style.backgroundColor = "white";
@@ -224,7 +228,8 @@ window.verReporte = function(periodo) {
         }
         if (coincide) { totalFiltrado += v.total; cantidadVentas++; }
     });
-    document.getElementById("resultado-reporte").innerHTML = `Vendido ${periodo}: $${totalFiltrado.toLocaleString()} (${cantidadVentas} ventas)`;
+    let res = document.getElementById("resultado-reporte");
+    if(res) res.innerHTML = `Vendido ${periodo}: $${totalFiltrado.toLocaleString()} (${cantidadVentas} ventas)`;
 };
 
 window.limpiarHistorial = function() {
@@ -260,7 +265,8 @@ function actualizarTop() {
   for (let p in contadorProductos) {
     if (contadorProductos[p] > max) { max = contadorProductos[p]; top = p; }
   }
-  document.getElementById("top").innerText = top;
+  let elTop = document.getElementById("top");
+  if(elTop) elTop.innerText = top;
 }
 
 function mostrarCantidades() {
@@ -285,16 +291,19 @@ function mostrarHistorial() {
   });
 }
 
-// --- ✨ AJUSTE FINAL: INTERRUPTOR DE CONFIGURACIÓN ✨ ---
+// --- ✨ INTERRUPTOR DE CONFIGURACIÓN ✨ ---
+// Esta función ahora es la ÚNICA que controla la visibilidad
 window.toggleConfig = function() {
   let c = document.getElementById("config");
   let productosDiv = document.getElementById("productos");
   
+  if (!c || !productosDiv) return;
+
   if (c.style.display === "none" || c.style.display === "") {
     c.style.display = "block";
-    productosDiv.classList.add("modo-config"); // Activa botones rojos
+    productosDiv.classList.add("modo-config"); // ESTO muestra los botones rojos
   } else {
     c.style.display = "none";
-    productosDiv.classList.remove("modo-config"); // Esconde botones rojos
+    productosDiv.classList.remove("modo-config"); // ESTO los esconde
   }
 };
