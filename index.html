@@ -192,6 +192,22 @@
     @media (max-width: 700px) {
       .config-grid { flex-direction: column; }
     }
+    /* Ocultar botones de eliminar en la pantalla principal */
+.card button {
+  display: none !important;
+}
+
+/* Solo se muestran cuando activamos el modo configuración */
+.modo-config .card button {
+  display: block !important;
+  margin: 5px auto;
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 0.7em;
+}
   </style>
 </head>
 <body>
