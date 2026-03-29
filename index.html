@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bendito Helado POS</title>
+  <style>
+    :root {
+      --rosa-principal: #e91e63;
+      --rosa-oscuro: #c2185b;
+      --amarillo-dorado: #ffeb3b;
+      --blanco-puro: #ffffff;
+      --gris-claro: #f8f9fa;
+      --fuente-redonda: 'Poppins', sans-serif;
+    }
+
+    /* Ajuste para que en móviles se pueda hacer scroll */
+    body { 
+      font-family: var(--fuente-redonda), Arial; 
+      padding: 0; margin: 0; 
+      background-color: var(--gris-claro); 
+      height: 100vh; 
+      display: flex; 
+      flex-direction: column; 
+      overflow: hidden; 
+    }
+
+    header { background-color: var(--rosa-principal); color: white; padding: 10px 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    header h1 { margin: 0; font-size: 1.8em; text-transform: uppercase; letter-spacing: 2px; }
+
+    .app-container { display: flex; flex: 1; overflow: hidden; }
+    
+    /* COLUMNAS BASE */
+    .col-productos { flex: 2; background-color: white; padding: 20px; overflow-y: auto; border-right: 2px solid #eee; }
+    .col-carrito { flex: 1.2; background-color: white; padding: 20px; display: flex; flex-direction: column; border-right: 2px solid #eee; }
+    .col-cobro { flex: 1.2; background-color: #fffde7; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+
+    /* RESPONSIVO PARA TABLET Y CELULAR */
+    @media (max-width: 900px) {
+      body { overflow-y: auto; height: auto; }
+      .app-container { flex-direction: column; overflow: visible; }
+      .col-productos, .col-carrito, .col-cobro { 
+        flex: none; 
+        width: 100%; 
+        border-right: none; 
+        border-bottom: 2px solid #eee; 
+        height: auto;
+        overflow: visible;
+      }
+      .card { width: 42% !important; margin: 0 auto; } /* 2 helados por fila */
+      header h1 { font-size: 1.4em; }
+    }
+
+    #productos { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+    
+    .card { background: white; border-radius: 20px; padding: 15px; width: 160px; text-align: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; border: 2px solid transparent; }
+    .card:hover { transform: translateY(-5px); border-color: var(--rosa-principal); }
+    .card img { width: 100%; max-width: 140px; height: 140px; object-fit: cover; border-radius: 15px; margin-bottom: 10px; }
+    .card strong { display: block; font-size: 1.1em; color: #333; }
+
+    #carrito { list-style: none; padding: 0; flex: 1; min-height: 100px; }
+    #carrito li { background: #fef1f6; margin-bottom: 10px; padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--rosa-principal); }
+    
+    .total-seccion { border-top: 3px solid var(--amarillo-dorado); background: #fffde7; padding: 15px; border-radius: 10px; margin-top: auto; }
+    .total-monto { font-size: 2.2em; color: #333; font-weight: bold; }
+
+    select, input { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #ddd; font-size: 1.1em; margin-bottom: 15px; box-sizing: border-box; }
+
+    .btn-pago-rapido { display: flex; gap: 10px; margin-bottom: 20px; }
+    .btn-pago { flex: 1; background-color: white; border: 2px solid var(--amarillo-dorado); padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+
+    .btn-cobrar { background-color: var(--rosa-principal); color: white; border: none; padding: 20px; border-radius: 15px; width: 100%; font-size: 1.4em; font-weight: bold; cursor: pointer; }
+    #historial { list-style: none; padding: 0; max-height: 200px; overflow-y: auto; background: white; border-radius: 10px; padding: 10px; }
+    
+    .btn-config { position: fixed; bottom: 10px; right: 10px; background: rgba(255,255,255,0.9); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid var(--rosa-principal); z-index: 100; font-size: 24px; }
+
+    .btn-eliminar { background-color: #ff4444; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 8px; width: 100%; }
+
+    .btn-reporte { background-color: #4CAF50; color: white; border: none; padding: 12px; margin: 5px; border-radius: 5px; cursor: pointer; font-weight: bold; flex: 1; }
+
+    .btn-limpiar { background-color: #333; color: white; border: none; padding: 12px; margin: 10px 5px; border-radius: 5px; cursor: pointer; width: 95%; }
+
+    /* Ajuste para el panel de configuración en móviles */
+    #config { 
+      display:none; position:fixed; top:10px; left:10px; right:10px; bottom:10px; 
+      background:white; padding:20px; border-radius:20px; 
+      box-shadow:0 10px 50px rgba(0,0,0,0.3); z-index:200; overflow-y:auto; 
+    }
+    .config-grid { display: flex; gap: 30px; margin-top: 20px; }
+    @media (max-width: 700px) {
+      .config-grid { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>BENDITO HELADO POS</h1>
+</header>
+
+<div class="app-container">
+  <div class="col-productos">
+    <h2>🍨 Menú de Helados</h2>
+    <div id="productos"></div>
+  </div>
+
+  <div class="col-carrito">
+    <h2>🛒 Pedido Actual</h2>
+    <ul id="carrito"></ul>
+    <div class="total-seccion">
+      <h3>TOTAL A PAGAR</h3>
+      <div class="total-monto">$<span id="total">0</span></div>
+    </div>
+  </div>
+
+  <div class="col-cobro">
+    <h2>💳 Cobro y Reportes</h2>
+    <label>Recibido:</label>
+    <input id="pago" type="number" placeholder="0" oninput="actualizarCambioManual()">
+
+    <div class="btn-pago-rapido">
+      <button class="btn-pago" onclick="pagoRapido(5000)">$5k</button>
+      <button class="btn-pago" onclick="pagoRapido(10000)">$10k</button>
+      <button class="btn-pago" onclick="pagoRapido(20000)">$20k</button>
+    </div>
+
+    <label>Método:</label>
+    <select id="metodo-pago" onchange="pagoRapido(this.value)">
+        <option value="Efectivo">Efectivo</option>
+        <option value="Nequi">Nequi</option>
+        <option value="Daviplata">Daviplata</option>
+    </select>
+    
+    <button onclick="procesarPago()" class="btn-cobrar">FINALIZAR VENTA</button>
+    <h3 style="text-align:center; color:#555;">Cambio: <span id="cambio">0</span></h3>
+
+    <hr style="border:1px solid #ddd; width:100%; margin: 20px 0;">
+    
+    <div style="display:flex; justify-content: space-between; align-items:center; background:white; padding:10px; border-radius:10px; margin-bottom:10px;">
+        <h3>🔥 Top: <span id="top" style="color:var(--rosa-principal)">...</span></h3>
+        <button onclick="exportarCSV()" style="background:#1d6f42; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Excel</button>
+    </div>
+    <ul id="historial"></ul>
+  </div>
+</div>
+
+<div class="btn-config" onclick="toggleConfig()">⚙️</div>
+
+<div id="config">
+  <div style="display:flex; justify-content:space-between; align-items: center;">
+      <h2 style="margin:0;">⚙️ Configuración</h2>
+      <button onclick="toggleConfig()" style="background:var(--rosa-principal); color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:bold;">Cerrar X</button>
+  </div>
+  
+  <div class="config-grid">
+    <div style="flex:1;">
+      <h3>Agregar Nuevo Helado</h3>
+      <input type="text" id="nombre" placeholder="Nombre">
+      <input type="number" id="precio" placeholder="Precio">
+      <input type="file" id="imagen">
+      <button onclick="agregarProducto()" style="background:#007bff; color:white; border:none; padding:15px; border-radius:10px; width:100%; font-weight:bold; cursor:pointer;">Guardar Producto</button>
+      
+      <div style="margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px;">
+          <h3>📊 Reportes de Ganancias</h3>
+          <div style="display: flex; gap: 5px;">
+              <button onclick="verReporte('hoy')" class="btn-reporte">Hoy</button>
+              <button onclick="verReporte('mes')" class="btn-reporte">Este Mes</button>
+              <button onclick="verReporte('pasado')" class="btn-reporte">Mes Pasado</button>
+          </div>
+          <button onclick="limpiarHistorial()" class="btn-limpiar">⚠️ Cierre de Caja (Borrar Historial)</button>
+          <div id="resultado-reporte" style="text-align: center; margin-top: 15px; font-weight: bold; color: var(--rosa-principal); font-size: 1.2em;"></div>
+      </div>
+    </div>
+    
+    <div style="flex:1;">
+      <h3>Inventario Vendido (Unidades)</h3>
+      <ul id="cantidades" style="list-style:none; padding:0; background:#f9f9f9; padding:10px; border-radius:10px;"></ul>
+    </div>
+  </div>
+</div>
+
+<script src="renderer.js"></script>
+</body>
+</html>
