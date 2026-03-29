@@ -55,15 +55,47 @@
 
   #productos { 
   display: grid !important; 
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important; 
-  gap: 12px;
-  justify-content: center;
-  align-items: start;
-  padding: 15px;
+  /* Forzamos 3 columnas para que sean cuadritos pequeños */
+  grid-template-columns: repeat(3, 1fr) !important; 
+  gap: 4px; /* Casi pegados */
+  padding: 5px; 
   width: 100% !important;
-  max-width: 600px; /* Esto evita que en pantallas muy grandes se estiren demasiado */
-  margin: 0 auto;  /* Esto centra todo el bloque de helados en la pantalla */
+  max-width: 100%; 
+  margin: 0; 
   box-sizing: border-box;
+}
+
+.card { 
+  background: white; 
+  border-radius: 4px; 
+  padding: 4px; 
+  text-align: center; 
+  border: 1px solid #ddd; 
+  /* Altura fija cortita para que quepan muchos en la pantalla */
+  height: 105px; 
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: none; /* Quitamos sombra para ganar espacio */
+}
+
+.card img { 
+  width: 100%; 
+  height: 50px; /* Foto pequeña */
+  object-fit: cover; 
+  border-radius: 3px; 
+}
+
+.card strong { 
+  font-size: 0.65em; /* Letra pequeña para que no ocupe espacio */
+  line-height: 1;
+  margin: 2px 0;
+}
+
+.card span {
+  font-size: 0.7em;
+  font-weight: bold;
+  color: #e91e63;
 }
   /* TRUCO 2: Centra todo el bloque de la cuadrícula */
   justify-content: center; 
