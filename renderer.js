@@ -67,6 +67,7 @@ window.agregarProducto = function() {
   reader.readAsDataURL(inputImagen.files[0]);
 };
 
+// --- ✨ AJUSTE EN MOSTRAR PRODUCTOS (ORDEN Y BOTÓN) ✨ ---
 function mostrarProductos() {
   let contenedor = document.getElementById("productos");
   if (!contenedor) return;
@@ -75,11 +76,11 @@ function mostrarProductos() {
   productos.forEach((p, index) => {
     let div = document.createElement("div");
     div.className = "card";
+    // Ordenamos: Nombre arriba, Imagen centro, Precio abajo
     div.innerHTML = `
+      <strong>${p.nombre}</strong>
       <img src="${p.imagen}">
-      <strong>${p.nombre}</strong><br>
-      <span style="color:#e91e63; font-weight:bold;">$${p.precio.toLocaleString()}</span>
-      <br>
+      <span>$${p.precio.toLocaleString()}</span>
       <button class="btn-eliminar" onclick="event.stopPropagation(); window.eliminarProducto(${index})">Eliminar</button>
     `;
     div.onclick = () => agregarAlCarrito(index);
@@ -165,10 +166,8 @@ window.procesarPago = function() {
   let valorPagado = parseFloat(inputPago.value) || 0;
   if (valorPagado < total) return;
 
-  // Guardamos detalle para el Excel
   let nombresProductos = carrito.map(p => p.nombre).join(", ");
 
-  // Registrar venta
   ventas.push({
     id: Date.now(),
     fecha: new Date().toLocaleDateString(),
@@ -180,7 +179,6 @@ window.procesarPago = function() {
     metodo: document.getElementById("metodo-pago").value
   });
 
-  // Actualizar inventario vendido
   carrito.forEach(p => {
     contadorProductos[p.nombre] = (contadorProductos[p.nombre] || 0) + 1;
     cantidades[p.nombre] = (cantidades[p.nombre] || 0) + 1;
@@ -286,11 +284,17 @@ function mostrarHistorial() {
     lista.appendChild(item);
   });
 }
-// Esta función activa/desactiva los botones de eliminar
-document.querySelector('.settings-btn, #btnConfiguracion, .fa-gear')?.addEventListener('click', () => {
-    document.getElementById('productos').classList.toggle('modo-config');
-});
+
+// --- ✨ AJUSTE FINAL: INTERRUPTOR DE CONFIGURACIÓN ✨ ---
 window.toggleConfig = function() {
   let c = document.getElementById("config");
-  c.style.display = (c.style.display === "none" || c.style.display === "") ? "block" : "none";
+  let productosDiv = document.getElementById("productos");
+  
+  if (c.style.display === "none" || c.style.display === "") {
+    c.style.display = "block";
+    productosDiv.classList.add("modo-config"); // Activa botones rojos
+  } else {
+    c.style.display = "none";
+    productosDiv.classList.remove("modo-config"); // Esconde botones rojos
+  }
 };
