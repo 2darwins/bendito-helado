@@ -1,186 +1,266 @@
-let productos = JSON.parse(localStorage.getItem("productos")) || [];
-let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
-let cantidades = JSON.parse(localStorage.getItem("cantidades")) || {};
+// =====================
+// VARIABLES GLOBALES
+// =====================
+let productos = [];
 let carrito = [];
 let total = 0;
-let metodoSeleccionado = "Efectivo";
+let contadorProductos = {};
+let cantidades = {};
 
-window.onload = function() {
+// =====================
+// CARGAR DATOS
+// =====================
+window.onload = function () {
+  let datosProductos = localStorage.getItem("productos");
+  let datosContador = localStorage.getItem("contadorProductos");
+  let datosCantidades = localStorage.getItem("cantidades");
+
+  if (datosProductos) {
+    productos = JSON.parse(datosProductos);
     mostrarProductos();
-    mostrarHistorial();
+  }
+
+  if (datosContador) {
+    contadorProductos = JSON.parse(datosContador);
+    actualizarTop();
+  }
+
+  if (datosCantidades) {
+    cantidades = JSON.parse(datosCantidades);
     mostrarCantidades();
-    actualizarReporteHoy();
+  }
 };
 
-function mostrarProductos() {
-    let contenedor = document.getElementById("productos");
-    contenedor.innerHTML = "";
-    productos.forEach((p, index) => {
-        let div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `
-            <strong>${p.nombre}</strong>
-            <img src="${p.imagen}">
-            <span style="color:#e91e63; font-weight:bold;">$${p.precio.toLocaleString()}</span>
-            <button class="btn-eliminar" onclick="event.stopPropagation(); eliminarProducto(${index})">Eliminar</button>
-        `;
-        div.onclick = () => agregarAlCarrito(index);
-        contenedor.appendChild(div);
-    });
-}
-
+// =====================
+// AGREGAR PRODUCTO
+// =====================
 window.agregarProducto = function() {
-    const nombre = document.getElementById("nombre").value;
-    const precio = parseFloat(document.getElementById("precio").value);
-    const inputImagen = document.getElementById("imagen");
+  let nombre = document.getElementById("nombre").value;
+  let precio = parseFloat(document.getElementById("precio").value);
+  let inputImagen = document.getElementById("imagen");
 
-    if (!nombre || isNaN(precio) || inputImagen.files.length === 0) {
-        alert("Faltan datos."); return;
-    }
+  if (!nombre || isNaN(precio) || inputImagen.files.length === 0) {
+    alert("Completa todos los campos");
+    return;
+  }
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        productos.push({ nombre, precio, imagen: e.target.result });
-        localStorage.setItem("productos", JSON.stringify(productos));
-        mostrarProductos();
-        toggleConfig();
-        alert("¡Guardado!");
+  let reader = new FileReader();
+  reader.onload = function (e) {
+    let producto = {
+      nombre,
+      precio,
+      imagen: e.target.result
     };
-    reader.readAsDataURL(inputImagen.files[0]);
+
+    productos.push(producto);
+    localStorage.setItem("productos", JSON.stringify(productos));
+
+    mostrarProductos();
+
+    document.getElementById("nombre").value = "";
+    document.getElementById("precio").value = "";
+    document.getElementById("imagen").value = "";
+    alert("Producto guardado");
+  };
+
+  reader.readAsDataURL(inputImagen.files[0]);
+}
+
+// =====================
+// MOSTRAR PRODUCTOS (MOSAICO AJUSTADO)
+// =====================
+function mostrarProductos() {
+  let contenedor = document.getElementById("productos");
+  if (!contenedor) return;
+  contenedor.innerHTML = "";
+
+  productos.forEach((p, index) => {
+    let div = document.createElement("div");
+    div.className = "card";
+
+    // Orden: Nombre -> Imagen -> Precio -> Botón Eliminar (oculto por CSS fuera de config)
+    div.innerHTML = `
+      <strong>${p.nombre}</strong>
+      <img src="${p.imagen}" class="img-producto">
+      <span>$${p.precio.toLocaleString()}</span>
+      <button class="btn-eliminar" onclick="event.stopPropagation(); window.eliminarProductoPermanente(${index})">Eliminar</button>
+    `;
+
+    div.onclick = () => agregarAlCarrito(index);
+    contenedor.appendChild(div);
+  });
+}
+
+// Nueva función para borrar productos del menú (Configuración)
+window.eliminarProductoPermanente = function(index) {
+  if (confirm("¿Seguro que quieres borrar este helado del menú?")) {
+    productos.splice(index, 1);
+    localStorage.setItem("productos", JSON.stringify(productos));
+    mostrarProductos();
+  }
 };
 
-window.eliminarProducto = function(index) {
-    if (confirm("¿Borrar este helado?")) {
-        productos.splice(index, 1);
-        localStorage.setItem("productos", JSON.stringify(productos));
-        mostrarProductos();
-    }
-};
-
+// =====================
+// AGREGAR AL CARRITO
+// =====================
 function agregarAlCarrito(index) {
-    let p = productos[index];
-    carrito.push(p);
-    total += p.precio;
-    actualizarCarrito();
+  let producto = productos[index];
+  carrito.push(producto);
+  total += producto.precio;
+  actualizarCarrito();
 }
 
+// =====================
+// ACTUALIZAR CARRITO
+// =====================
 function actualizarCarrito() {
-    document.getElementById("total").innerText = total.toLocaleString();
-    let lista = document.getElementById("carrito");
-    lista.innerHTML = "";
-    carrito.slice(-3).forEach((p, i) => {
-        let li = document.createElement("li");
-        li.innerHTML = `<span>${p.nombre}</span> <b>$${p.precio.toLocaleString()}</b>`;
-        lista.appendChild(li);
-    });
-    actualizarCambioManual();
+  let lista = document.getElementById("carrito");
+  if (!lista) return;
+  lista.innerHTML = "";
+
+  carrito.forEach((p, index) => {
+    let item = document.createElement("li");
+    item.innerHTML = `
+      ${p.nombre} - $${p.precio.toLocaleString()}
+      <button onclick="eliminarDelCarrito(${index})">❌</button>
+    `;
+    lista.appendChild(item);
+  });
+
+  document.getElementById("total").innerText = total.toLocaleString();
+  actualizarCambio(); // Actualiza el cálculo si hay un valor en el input
 }
 
-window.pagoRapido = function(metodo) {
-    metodoSeleccionado = metodo;
-    let inputPago = document.getElementById("pago");
-    if (metodo === 'Efectivo') {
-        inputPago.value = "";
-        inputPago.readOnly = false;
-        inputPago.focus();
-    } else {
-        inputPago.value = total;
-        inputPago.readOnly = true;
-    }
-    actualizarCambioManual();
+// =====================
+// ELIMINAR DEL CARRITO
+// =====================
+window.eliminarDelCarrito = function(index) {
+  total -= carrito[index].precio;
+  carrito.splice(index, 1);
+  actualizarCarrito();
+}
+
+// =====================
+// LÓGICA DE PAGO Y CAMBIO
+// =====================
+window.actualizarCambio = function() {
+  let inputPago = document.getElementById("pago");
+  let cambioTexto = document.getElementById("cambio");
+  let pagoRecibido = parseFloat(inputPago.value) || 0;
+
+  if (pagoRecibido >= total && total > 0) {
+    cambioTexto.innerText = (pagoRecibido - total).toLocaleString();
+    cambioTexto.style.color = "green";
+  } else {
+    cambioTexto.innerText = "0";
+    cambioTexto.style.color = "red";
+  }
 };
 
-window.actualizarCambioManual = function() {
-    let recibido = parseFloat(document.getElementById("pago").value) || 0;
-    let elCambio = document.getElementById("cambio");
-    if (recibido >= total) {
-        elCambio.innerHTML = `<span style="color:green;">Cambio: $${(recibido - total).toLocaleString()}</span>`;
-    } else {
-        elCambio.innerHTML = `<span style="color:red;">Faltan: $${(total - recibido).toLocaleString()}</span>`;
-    }
-};
-
+// =====================
+// PROCESAR PAGO
+// =====================
 window.procesarPago = function() {
-    let recibido = parseFloat(document.getElementById("pago").value) || 0;
-    if (total === 0) return alert("Carrito vacío");
-    if (recibido < total) return alert("Dinero insuficiente");
+  if (carrito.length === 0) {
+    alert("No hay productos");
+    return;
+  }
 
-    let nombres = carrito.map(p => p.nombre).join(", ");
-    let venta = {
-        fecha: new Date().toLocaleDateString(),
-        hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-        detalle: nombres,
-        total: total,
-        metodo: metodoSeleccionado
-    };
+  let pago = parseFloat(document.getElementById("pago").value);
 
-    ventas.push(venta);
-    carrito.forEach(p => cantidades[p.nombre] = (cantidades[p.nombre] || 0) + 1);
+  if (isNaN(pago) || pago < total) {
+    alert("Pago insuficiente");
+    return;
+  }
 
-    localStorage.setItem("ventas", JSON.stringify(ventas));
-    localStorage.setItem("cantidades", JSON.stringify(cantidades));
+  // Aquí puedes agregar la lógica para guardar en el historial/Excel si lo deseas
+  
+  carrito.forEach(p => {
+    contadorProductos[p.nombre] = (contadorProductos[p.nombre] || 0) + 1;
+    cantidades[p.nombre] = (cantidades[p.nombre] || 0) + 1;
+  });
 
-    alert("Venta Exitosa. Cambio: $" + (recibido - total).toLocaleString());
-    
-    carrito = []; total = 0;
-    actualizarCarrito();
-    mostrarHistorial();
-    mostrarCantidades();
-    actualizarReporteHoy();
-    document.getElementById("pago").value = "";
-};
+  localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
+  localStorage.setItem("cantidades", JSON.stringify(cantidades));
 
-window.exportarCSV = function() {
-    let csv = "\ufeffFecha,Hora,Detalle,Metodo,Total\n";
-    ventas.forEach(v => csv += `${v.fecha},${v.hora},"${v.detalle}",${v.metodo},${v.total}\n`);
-    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    let link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "Reporte_Ventas.csv";
-    link.click();
-};
+  actualizarTop();
+  mostrarCantidades();
 
-function mostrarHistorial() {
-    let h = document.getElementById("historial");
-    h.innerHTML = "";
-    ventas.slice(-5).reverse().forEach(v => {
-        let li = document.createElement("li");
-        li.innerText = `${v.hora} - ${v.metodo}: $${v.total.toLocaleString()}`;
-        h.appendChild(li);
-    });
+  alert("¡Venta Exitosa!");
+
+  carrito = [];
+  total = 0;
+  actualizarCarrito();
+  document.getElementById("pago").value = "";
+  document.getElementById("pago").readOnly = false;
+  document.getElementById("cambio").innerText = "0";
 }
 
+// =====================
+// MÁS VENDIDO
+// =====================
+function actualizarTop() {
+  let top = "";
+  let max = 0;
+
+  for (let p in contadorProductos) {
+    if (contadorProductos[p] > max) {
+      max = contadorProductos[p];
+      top = p;
+    }
+  }
+
+  let elTop = document.getElementById("top");
+  if(elTop) elTop.innerText = top ? `${top} (${max})` : "Sin ventas";
+}
+
+// =====================
+// CANTIDADES
+// =====================
 function mostrarCantidades() {
-    let c = document.getElementById("cantidades");
-    c.innerHTML = "";
-    for (let p in cantidades) {
-        let li = document.createElement("li");
-        li.innerText = `${p}: ${cantidades[p]} uds`;
-        c.appendChild(li);
-    }
+  let lista = document.getElementById("cantidades");
+  if(!lista) return;
+  lista.innerHTML = "";
+
+  for (let p in cantidades) {
+    let li = document.createElement("li");
+    li.innerText = `${p}: ${cantidades[p]}`;
+    lista.appendChild(li);
+  }
 }
 
-function actualizarReporteHoy() {
-    let hoy = new Date().toLocaleDateString();
-    let suma = ventas.filter(v => v.fecha === hoy).reduce((s, v) => s + v.total, 0);
-    document.getElementById("reporte-hoy").innerText = "$" + suma.toLocaleString();
-}
-
+// =====================
+// CONFIGURACIÓN (CON MODO ELIMINAR)
+// =====================
 window.toggleConfig = function() {
-    let c = document.getElementById("config");
-    let p = document.getElementById("productos");
-    if (c.style.display === "block") {
-        c.style.display = "none"; p.classList.remove("modo-config");
-    } else {
-        c.style.display = "block"; p.classList.add("modo-config");
-    }
-};
+  let config = document.getElementById("config");
+  let contenedorProductos = document.getElementById("productos");
+  
+  if (config.style.display === "none" || config.style.display === "") {
+    config.style.display = "block";
+    contenedorProductos.classList.add("modo-config"); // Activa botones rojos
+  } else {
+    config.style.display = "none";
+    contenedorProductos.classList.remove("modo-config"); // Oculta botones rojos
+  }
+}
 
-window.limpiarHistorial = function() {
-    if(confirm("¿Borrar historial?")) {
-        ventas = []; cantidades = {};
-        localStorage.setItem("ventas", "[]");
-        localStorage.setItem("cantidades", "{}");
-        location.reload();
-    }
-};
+// =====================
+// PAGOS RÁPIDOS MEJORADOS
+// =====================
+window.pagoRapido = function(metodo) {
+  let inputPago = document.getElementById("pago");
+  
+  if (metodo === 'Nequi' || metodo === 'Daviplata') {
+    inputPago.value = total; // Pone el total automático
+    inputPago.readOnly = true; // No deja editar para evitar errores
+  } else if (metodo === 'Efectivo') {
+    inputPago.value = ""; // Limpia para escribir el billete
+    inputPago.readOnly = false;
+    inputPago.focus();
+  } else {
+    inputPago.value = metodo; // Para botones de valores fijos (2000, 5000, etc)
+    inputPago.readOnly = false;
+  }
+  actualizarCambio();
+}
