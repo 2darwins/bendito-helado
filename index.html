@@ -11,88 +11,91 @@
       --gris-claro: #f8f9fa;
     }
 
-    body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--gris-claro); display: flex; flex-direction: column; height: 100vh; }
+    body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--gris-claro); display: flex; flex-direction: column; height: 100vh; overflow-x: hidden; }
     header { background: var(--rosa-principal); color: white; padding: 10px; text-align: center; font-weight: bold; }
     
     .app-container { display: flex; flex: 1; flex-direction: column; overflow-y: auto; }
     
     /* PRODUCTOS 3 COLUMNAS */
-    #productos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px; }
+    #productos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; }
     .card { 
-      background: white; border-radius: 12px; padding: 10px; text-align: center; border: 1px solid #ddd;
-      display: flex; flex-direction: column; justify-content: space-between; height: 180px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      background: white; border-radius: 10px; padding: 8px; text-align: center; border: 1px solid #ddd;
+      display: flex; flex-direction: column; justify-content: space-between; height: 180px; box-sizing: border-box;
     }
-    .card img { width: 100%; height: 75px; object-fit: cover; border-radius: 8px; }
-    .card strong { font-size: 0.8em; line-height: 1.1; height: 35px; display: flex; align-items: center; justify-content: center; }
+    .card img { width: 100%; height: 75px; object-fit: cover; border-radius: 6px; }
+    .card strong { font-size: 0.75em; height: 32px; display: flex; align-items: center; justify-content: center; line-height: 1.1; }
     
     /* BOTÓN ELIMINAR */
     .btn-eliminar { display: none !important; }
-    #productos.modo-config .btn-eliminar { display: block !important; background: #ff4444; color: white; border: none; padding: 5px; border-radius: 5px; margin-top: 5px; }
+    #productos.modo-config .btn-eliminar { display: block !important; background: #ff4444; color: white; border: none; padding: 5px; border-radius: 5px; margin-top: 5px; cursor: pointer; }
+    #productos.modo-config .card { height: 210px !important; }
 
-    /* CARRITO */
+    /* CARRITO Y COBRO */
     .seccion-carrito { padding: 15px; background: white; border-top: 2px solid #eee; }
-    #lista-carrito { list-style: none; padding: 0; margin: 0; }
-    #lista-carrito li { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; font-size: 0.9em; }
+    #carrito { list-style: none; padding: 0; margin: 0; }
+    #carrito li { display: flex; justify-content: space-between; padding: 5px; border-bottom: 1px solid #eee; font-size: 0.9em; }
 
-    /* COBRO */
     .seccion-cobro { padding: 15px; background: #fffde7; border-top: 2px solid #ddd; }
-    .total-display { font-size: 1.8em; font-weight: bold; text-align: center; color: #333; margin-bottom: 10px; }
+    .total-display { font-size: 2em; font-weight: bold; text-align: center; margin-bottom: 10px; }
     
     .pago-botones { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-    .pago-botones button { padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 0.9em; }
+    .pago-botones button { padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 1em; }
     
     .input-pago { width: 100%; padding: 15px; font-size: 1.2em; border-radius: 8px; border: 2px solid #ccc; text-align: center; box-sizing: border-box; }
-    .cambio-display { font-size: 1.3em; text-align: center; margin: 10px 0; font-weight: bold; min-height: 1.5em; }
+    #cambio { font-size: 1.3em; text-align: center; margin: 10px 0; font-weight: bold; }
     
     .btn-confirmar { background: var(--rosa-principal); color: white; border: none; padding: 18px; border-radius: 10px; width: 100%; font-size: 1.2em; font-weight: bold; }
 
     /* CONFIG */
-    .btn-tuerca { position: fixed; bottom: 20px; right: 20px; background: white; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--rosa-principal); box-shadow: 0 4px 10px rgba(0,0,0,0.2); font-size: 25px; }
-    #modal-config { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; padding:20px; box-sizing: border-box; z-index:1000; overflow-y: auto; }
+    .btn-config { position: fixed; bottom: 20px; right: 20px; background: white; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--rosa-principal); z-index: 100; font-size: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    #config { display:none; position:fixed; top:5%; left:5%; width:90%; height:90%; background:white; padding:20px; border-radius:15px; z-index:200; overflow-y:auto; box-shadow: 0 0 50px rgba(0,0,0,0.5); box-sizing: border-box; }
+    input[type="text"], input[type="number"] { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
   </style>
 </head>
 <body>
 
-<header>BENDITO HELADO</header>
+<header><h1>BENDITO HELADO</h1></header>
 
 <div class="app-container">
   <div id="productos"></div>
 
   <div class="seccion-carrito">
-    <div class="total-display">TOTAL: $<span id="total-monto">0</span></div>
-    <ul id="lista-carrito"></ul>
+    <div class="total-display">TOTAL: $<span id="total">0</span></div>
+    <ul id="carrito"></ul>
   </div>
 
   <div class="seccion-cobro">
     <div class="pago-botones">
-      <button onclick="seleccionarMetodo('Efectivo')" style="background:#4caf50;">Efectivo</button>
-      <button onclick="seleccionarMetodo('Nequi')" style="background:#7030a0;">Nequi</button>
-      <button onclick="seleccionarMetodo('Daviplata')" style="background:#ff0000;">Daviplata</button>
+      <button onclick="pagoRapido('Efectivo')" style="background:#4caf50;">Efectivo</button>
+      <button onclick="pagoRapido('Nequi')" style="background:#7030a0;">Nequi</button>
+      <button onclick="pagoRapido('Daviplata')" style="background:#ff0000;">Daviplata</button>
     </div>
-    
-    <input id="input-pago" class="input-pago" type="number" placeholder="¿Cuánto recibiste?" oninput="calcularCambio()">
-    
-    <div id="cambio-texto" class="cambio-display"></div>
-    
-    <button onclick="finalizarVenta()" class="btn-confirmar">REGISTRAR VENTA</button>
+    <input id="pago" class="input-pago" type="number" placeholder="¿Cuánto recibes?" oninput="actualizarCambioManual()">
+    <div id="cambio">Cambio: $0</div>
+    <button onclick="procesarPago()" class="btn-confirmar">COBRAR AHORA</button>
   </div>
 
-  <div style="padding: 20px; background: #f0f0f0;">
-    <button onclick="exportarCSV()" style="background:#28a745; color:white; border:none; padding:10px; border-radius:5px; width:100%;">📥 Descargar Excel de Ventas</button>
-    <h4>Ventas de Hoy: <span id="resumen-hoy">$0</span></h4>
-    <ul id="historial-lista" style="font-size: 0.8em; color: #555;"></ul>
+  <div style="padding: 20px; background: #eee;">
+    <button onclick="exportarCSV()" style="background:#28a745; color:white; border:none; padding:10px; border-radius:5px; width:100%;">📥 Descargar Excel (CSV)</button>
+    <h4>Ventas de Hoy: <span id="reporte-hoy">$0</span></h4>
+    <h4>Historial Reciente:</h4>
+    <ul id="historial"></ul>
+    <h4>Cantidades:</h4>
+    <ul id="cantidades"></ul>
   </div>
 </div>
 
-<div class="btn-tuerca" onclick="abrirConfig()">⚙️</div>
+<div class="btn-config" onclick="toggleConfig()">⚙️</div>
 
-<div id="modal-config">
-  <button onclick="abrirConfig()" style="float:right; padding:10px;">Cerrar X</button>
-  <h2>Configuración de Productos</h2>
-  <input type="text" id="nuevo-nombre" placeholder="Nombre del Helado" style="width:100%; padding:10px; margin-bottom:10px;">
-  <input type="number" id="nuevo-precio" placeholder="Precio" style="width:100%; padding:10px; margin-bottom:10px;">
-  <input type="file" id="nueva-imagen" style="margin-bottom:20px;">
-  <button onclick="guardarNuevoProducto()" style="width:100%; padding:15px; background:#007bff; color:white; border:none; border-radius:10px;">GUARDAR PRODUCTO</button>
+<div id="config">
+  <button onclick="toggleConfig()" style="float:right; padding:10px;">Cerrar X</button>
+  <h2>Configuración</h2>
+  <input type="text" id="nombre" placeholder="Nombre del Helado">
+  <input type="number" id="precio" placeholder="Precio">
+  <input type="file" id="imagen">
+  <button onclick="agregarProducto()" style="width:100%; padding:15px; background:#007bff; color:white; border:none; border-radius:10px;">GUARDAR HELADO</button>
+  <br><br>
+  <button onclick="limpiarHistorial()" style="width:100%; padding:10px; background:red; color:white; border:none; border-radius:5px;">LIMPIAR TODO EL HISTORIAL</button>
 </div>
 
 <script src="renderer.js"></script>
