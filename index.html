@@ -31,12 +31,10 @@
 
     .app-container { display: flex; flex: 1; flex-direction: column; overflow-y: auto; }
 
-    /* SECCIONES */
     .col-productos { padding: 10px; background: white; }
     .col-carrito { padding: 15px; background: white; border-top: 2px solid #eee; }
     .col-cobro { padding: 15px; background: #fffde7; border-top: 2px solid #eee; }
 
-    /* ✨ DISEÑO MOSAICO 3 COLUMNAS ✨ */
     #productos { 
       display: grid !important; 
       grid-template-columns: repeat(3, 1fr) !important; 
@@ -46,7 +44,6 @@
       padding: 5px;
     }
 
-    /* ✨ TARJETA ORDENADA: Nombre > Imagen > Precio ✨ */
     .card { 
       background: white; 
       border-radius: 10px; 
@@ -54,12 +51,13 @@
       text-align: center; 
       border: 1px solid #ddd;
       box-sizing: border-box; 
-      height: 170px; /* Altura fija para que nada se pise */
+      height: 180px; 
       display: flex;
       flex-direction: column; 
       justify-content: space-between; 
       align-items: center;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      position: relative;
     }
 
     .card strong { 
@@ -70,6 +68,7 @@
       display: flex;
       align-items: center;
       line-height: 1.1;
+      order: 1;
     }
 
     .card img { 
@@ -77,39 +76,38 @@
       height: 75px; 
       object-fit: cover; 
       border-radius: 6px; 
+      order: 2;
     }
 
     .card span {
       font-size: 0.9em;
       font-weight: bold;
       color: var(--rosa-principal);
+      order: 3;
     }
 
-  /* --- BOTÓN ELIMINAR (OCULTO POR DEFECTO) --- */
-.card button { 
-  display: none !important; 
-}
+    /* --- BOTÓN ELIMINAR --- */
+    .card .btn-eliminar { 
+      display: none !important; 
+    }
 
-/* Solo se muestra cuando abres configuración (SIN ESPACIO entre el ID y la clase) */
-#productos.modo-config .card button {
-  display: block !important;
-  background-color: #ff4444;
-  color: white;
-  border: none;
-  padding: 8px;
-  border-radius: 6px;
-  font-size: 0.8em;
-  width: 100%;
-  margin-top: 5px;
-  cursor: pointer;
-}
+    /* Solo visible en modo configuración */
+    #productos.modo-config .card .btn-eliminar {
+      display: block !important;
+      background-color: #ff4444;
+      color: white;
+      border: none;
+      padding: 5px;
+      border-radius: 4px;
+      font-size: 0.7em;
+      width: 100%;
+      margin-top: 5px;
+      order: 4;
+      cursor: pointer;
+    }
 
-/* Ajuste opcional: hace la tarjeta un poquito más alta para que quepa el botón */
-#productos.modo-config .card {
-  height: 190px !important;
-}
+    #productos.modo-config .card { height: 210px !important; }
 
-    /* CARRITO Y COBRO */
     #carrito { list-style: none; padding: 0; }
     #carrito li { background: #fef1f6; margin-bottom: 8px; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; border-left: 4px solid var(--rosa-principal); }
     
@@ -154,7 +152,7 @@
         <option value="Daviplata">Daviplata</option>
     </select>
     <button onclick="procesarPago()" class="btn-cobrar">COBRAR AHORA</button>
-    <h3 style="text-align:center">Cambio: $<span id="cambio">0</span></h3>
+    <h3 id="cambio" style="text-align:center">Cambio: $0</h3>
   </div>
 </div>
 
@@ -175,19 +173,5 @@
 </div>
 
 <script src="renderer.js"></script>
-<script>
-  // Esta función asegura que el botón de eliminar aparezca solo en configuración
-  function toggleConfig() {
-    const configDiv = document.getElementById('config');
-    const productosDiv = document.getElementById('productos');
-    if (configDiv.style.display === 'none' || configDiv.style.display === '') {
-      configDiv.style.display = 'block';
-      productosDiv.classList.add('modo-config');
-    } else {
-      configDiv.style.display = 'none';
-      productosDiv.classList.remove('modo-config');
-    }
-  }
-</script>
 </body>
 </html>
