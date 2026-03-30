@@ -18,8 +18,8 @@ window.onload = function () {
   
   document.body.onclick = function() {
     let inputPago = document.getElementById("pago");
-    let metodo = document.getElementById("metodo-pago") ? document.getElementById("metodo-pago").value : "Efectivo";
-    if (metodo === "Efectivo" && inputPago) {
+    let metodoObj = document.getElementById("metodo-pago");
+    if (metodoObj && metodoObj.value === "Efectivo") {
         inputPago.readOnly = false;
         inputPago.disabled = false;
     }
@@ -67,7 +67,6 @@ window.agregarProducto = function() {
   reader.readAsDataURL(inputImagen.files[0]);
 };
 
-// --- ✨ MOSTRAR PRODUCTOS (ORDEN Y BOTÓN) ✨ ---
 function mostrarProductos() {
   let contenedor = document.getElementById("productos");
   if (!contenedor) return;
@@ -76,8 +75,6 @@ function mostrarProductos() {
   productos.forEach((p, index) => {
     let div = document.createElement("div");
     div.className = "card";
-    // Ordenamos: Nombre arriba, Imagen centro, Precio abajo
-    // El botón tiene la clase "btn-eliminar" para que tu CSS lo oculte/muestre
     div.innerHTML = `
       <strong>${p.nombre}</strong>
       <img src="${p.imagen}">
@@ -115,7 +112,7 @@ function actualizarCarrito() {
     lista.appendChild(item);
   });
   document.getElementById("total").innerText = total.toLocaleString();
-  if(window.actualizarCambioManual) window.actualizarCambioManual();
+  window.actualizarCambioManual();
 }
 
 function eliminarDelCarrito(index) {
@@ -137,31 +134,6 @@ window.actualizarCambioManual = function() {
   } else {
     elCambio.innerHTML = `<span style="color:red;">Falta: $${(total - valorRecibido).toLocaleString()}</span>`;
   }
-};
-
-window.pagoRapido = function(valor) {
-  let inputPago = document.getElementById("pago");
-  let selectorMetodo = document.getElementById("metodo-pago");
-  if(!inputPago || !selectorMetodo) return;
-  
-  inputPago.disabled = false;
-  inputPago.readOnly = false;
-  inputPago.style.backgroundColor = "white";
-
-  if (valor === 'Nequi' || valor === 'Daviplata') {
-    selectorMetodo.value = valor;
-    inputPago.value = total; 
-    inputPago.readOnly = true; 
-    inputPago.style.backgroundColor = "#f0f0f0";
-  } else if (valor === 'Efectivo') {
-    selectorMetodo.value = "Efectivo";
-    inputPago.value = ""; 
-    inputPago.focus();
-  } else {
-    selectorMetodo.value = "Efectivo";
-    inputPago.value = valor;
-  }
-  window.actualizarCambioManual();
 };
 
 window.procesarPago = function() {
@@ -204,62 +176,22 @@ window.procesarPago = function() {
   inputPago.readOnly = false;
   document.getElementById("metodo-pago").value = "Efectivo";
   document.getElementById("cambio").innerText = "Venta Exitosa. Cambio: $" + cambioFinal.toLocaleString();
-  
-  setTimeout(() => inputPago.focus(), 50);
 };
 
-// --- REPORTES Y EXCEL ---
-window.verReporte = function(periodo) {
-    const ahora = new Date();
-    let totalFiltrado = 0;
-    let cantidadVentas = 0;
-
-    ventas.forEach(v => {
-        const partes = v.fecha.split('/');
-        const fechaVenta = new Date(partes[2], partes[1] - 1, partes[0]);
-        let coincide = false;
-
-        if (periodo === 'hoy') coincide = fechaVenta.toDateString() === ahora.toDateString();
-        else if (periodo === 'mes') coincide = (fechaVenta.getMonth() === ahora.getMonth() && fechaVenta.getFullYear() === ahora.getFullYear());
-        else if (periodo === 'pasado') {
-            let m = ahora.getMonth() - 1; let a = ahora.getFullYear();
-            if (m < 0) { m = 11; a--; }
-            coincide = (fechaVenta.getMonth() === m && fechaVenta.getFullYear() === a);
-        }
-        if (coincide) { totalFiltrado += v.total; cantidadVentas++; }
-    });
-    let res = document.getElementById("resultado-reporte");
-    if(res) res.innerHTML = `Vendido ${periodo}: $${totalFiltrado.toLocaleString()} (${cantidadVentas} ventas)`;
+// --- INTERRUPTOR DE CONFIGURACIÓN ---
+window.toggleConfig = function() {
+  let c = document.getElementById("config");
+  let productosDiv = document.getElementById("productos");
+  if (c.style.display === "none" || c.style.display === "") {
+    c.style.display = "block";
+    productosDiv.classList.add("modo-config");
+  } else {
+    c.style.display = "none";
+    productosDiv.classList.remove("modo-config");
+  }
 };
 
-window.limpiarHistorial = function() {
-    if (confirm("¿Borrar todas las ventas? (Los productos no se borran)")) {
-        ventas = [];
-        contadorProductos = {};
-        cantidades = {};
-        localStorage.setItem("ventas", JSON.stringify(ventas));
-        localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
-        localStorage.setItem("cantidades", JSON.stringify(cantidades));
-        location.reload();
-    }
-};
-
-window.exportarCSV = function() {
-  if (ventas.length === 0) return alert("No hay ventas.");
-  let csv = "\ufeffFecha;Hora;Detalle de Productos;Método;Total;Pago;Cambio\n";
-  ventas.forEach(v => {
-    let detalle = v.productosDetalle || "Venta anterior";
-    csv += `${v.fecha};${v.hora};${detalle};${v.metodo};$${v.total};$${v.pago};$${v.cambio}\n`;
-  });
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", `Reporte_Ventas.csv`);
-  link.click();
-};
-
-// --- INTERFAZ ---
+// --- REPORTES E INTERFAZ (Originales) ---
 function actualizarTop() {
   let top = "Ninguno"; let max = 0;
   for (let p in contadorProductos) {
@@ -290,20 +222,3 @@ function mostrarHistorial() {
     lista.appendChild(item);
   });
 }
-
-// --- ✨ INTERRUPTOR DE CONFIGURACIÓN ✨ ---
-// Esta función ahora es la ÚNICA que controla la visibilidad
-window.toggleConfig = function() {
-  let c = document.getElementById("config");
-  let productosDiv = document.getElementById("productos");
-  
-  if (!c || !productosDiv) return;
-
-  if (c.style.display === "none" || c.style.display === "") {
-    c.style.display = "block";
-    productosDiv.classList.add("modo-config"); // ESTO muestra los botones rojos
-  } else {
-    c.style.display = "none";
-    productosDiv.classList.remove("modo-config"); // ESTO los esconde
-  }
-};
