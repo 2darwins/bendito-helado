@@ -18,15 +18,15 @@ window.onload = function () {
   
   document.body.onclick = function() {
     let inputPago = document.getElementById("pago");
-    let metodoObj = document.getElementById("metodo-pago");
-    if (metodoObj && metodoObj.value === "Efectivo") {
+    let metodo = document.getElementById("metodo-pago").value;
+    if (metodo === "Efectivo") {
         inputPago.readOnly = false;
         inputPago.disabled = false;
     }
   };
 };
 
-// --- GESTIÓN DE PRODUCTOS ---
+// --- GESTIÓN DE PRODUCTOS (Botón de eliminar añadido aquí) ---
 window.agregarProducto = function() {
   const nombre = document.getElementById("nombre").value;
   const precio = parseFloat(document.getElementById("precio").value);
@@ -75,6 +75,7 @@ function mostrarProductos() {
   productos.forEach((p, index) => {
     let div = document.createElement("div");
     div.className = "card";
+    // Mantenemos tu orden: Nombre, Imagen, Precio + el Botón de Eliminar
     div.innerHTML = `
       <strong>${p.nombre}</strong>
       <img src="${p.imagen}">
@@ -125,7 +126,6 @@ function eliminarDelCarrito(index) {
 window.actualizarCambioManual = function() {
   let inputPago = document.getElementById("pago");
   let elCambio = document.getElementById("cambio");
-  if(!inputPago || !elCambio) return;
   let valorRecibido = parseFloat(inputPago.value) || 0;
 
   if (valorRecibido >= total && total > 0) {
@@ -134,6 +134,29 @@ window.actualizarCambioManual = function() {
   } else {
     elCambio.innerHTML = `<span style="color:red;">Falta: $${(total - valorRecibido).toLocaleString()}</span>`;
   }
+};
+
+window.pagoRapido = function(valor) {
+  let inputPago = document.getElementById("pago");
+  let selectorMetodo = document.getElementById("metodo-pago");
+  inputPago.disabled = false;
+  inputPago.readOnly = false;
+  inputPago.style.backgroundColor = "white";
+
+  if (valor === 'Nequi' || valor === 'Daviplata') {
+    selectorMetodo.value = valor;
+    inputPago.value = total; 
+    inputPago.readOnly = true; 
+    inputPago.style.backgroundColor = "#f0f0f0";
+  } else if (valor === 'Efectivo') {
+    selectorMetodo.value = "Efectivo";
+    inputPago.value = ""; 
+    inputPago.focus();
+  } else {
+    selectorMetodo.value = "Efectivo";
+    inputPago.value = valor;
+  }
+  window.actualizarCambioManual();
 };
 
 window.procesarPago = function() {
@@ -176,29 +199,67 @@ window.procesarPago = function() {
   inputPago.readOnly = false;
   document.getElementById("metodo-pago").value = "Efectivo";
   document.getElementById("cambio").innerText = "Venta Exitosa. Cambio: $" + cambioFinal.toLocaleString();
+  
+  setTimeout(() => inputPago.focus(), 50);
 };
 
-// --- INTERRUPTOR DE CONFIGURACIÓN ---
-window.toggleConfig = function() {
-  let c = document.getElementById("config");
-  let productosDiv = document.getElementById("productos");
-  if (c.style.display === "none" || c.style.display === "") {
-    c.style.display = "block";
-    productosDiv.classList.add("modo-config");
-  } else {
-    c.style.display = "none";
-    productosDiv.classList.remove("modo-config");
-  }
+// --- REPORTES Y EXCEL (Recuperados) ---
+window.verReporte = function(periodo) {
+    const ahora = new Date();
+    let totalFiltrado = 0;
+    let cantidadVentas = 0;
+
+    ventas.forEach(v => {
+        const partes = v.fecha.split('/');
+        const fechaVenta = new Date(partes[2], partes[1] - 1, partes[0]);
+        let coincide = false;
+
+        if (periodo === 'hoy') coincide = fechaVenta.toDateString() === ahora.toDateString();
+        else if (periodo === 'mes') coincide = (fechaVenta.getMonth() === ahora.getMonth() && fechaVenta.getFullYear() === ahora.getFullYear());
+        else if (periodo === 'pasado') {
+            let m = ahora.getMonth() - 1; let a = ahora.getFullYear();
+            if (m < 0) { m = 11; a--; }
+            coincide = (fechaVenta.getMonth() === m && fechaVenta.getFullYear() === a);
+        }
+        if (coincide) { totalFiltrado += v.total; cantidadVentas++; }
+    });
+    document.getElementById("resultado-reporte").innerHTML = `Vendido ${periodo}: $${totalFiltrado.toLocaleString()} (${cantidadVentas} ventas)`;
 };
 
-// --- REPORTES E INTERFAZ (Originales) ---
+window.limpiarHistorial = function() {
+    if (confirm("¿Borrar todas las ventas? (Los productos no se borran)")) {
+        ventas = [];
+        contadorProductos = {};
+        cantidades = {};
+        localStorage.setItem("ventas", JSON.stringify(ventas));
+        localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
+        localStorage.setItem("cantidades", JSON.stringify(cantidades));
+        location.reload();
+    }
+};
+
+window.exportarCSV = function() {
+  if (ventas.length === 0) return alert("No hay ventas.");
+  let csv = "\ufeffFecha;Hora;Detalle de Productos;Método;Total;Pago;Cambio\n";
+  ventas.forEach(v => {
+    let detalle = v.productosDetalle || "Venta anterior";
+    csv += `${v.fecha};${v.hora};${detalle};${v.metodo};$${v.total};$${v.pago};$${v.cambio}\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Reporte_Ventas.csv`);
+  link.click();
+};
+
+// --- INTERFAZ ---
 function actualizarTop() {
   let top = "Ninguno"; let max = 0;
   for (let p in contadorProductos) {
     if (contadorProductos[p] > max) { max = contadorProductos[p]; top = p; }
   }
-  let elTop = document.getElementById("top");
-  if(elTop) elTop.innerText = top;
+  document.getElementById("top").innerText = top;
 }
 
 function mostrarCantidades() {
@@ -222,3 +283,17 @@ function mostrarHistorial() {
     lista.appendChild(item);
   });
 }
+
+// --- INTERRUPTOR DE CONFIGURACIÓN ---
+window.toggleConfig = function() {
+  let c = document.getElementById("config");
+  let productosDiv = document.getElementById("productos");
+  
+  if (c.style.display === "none" || c.style.display === "") {
+    c.style.display = "block";
+    productosDiv.classList.add("modo-config");
+  } else {
+    c.style.display = "none";
+    productosDiv.classList.remove("modo-config");
+  }
+};
