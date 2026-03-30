@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Bendito Helado POS</title>
-  <link rel="icon" type="image/png" href="logo.jpg">
-  <link rel="apple-touch-icon" href="logo.jpg">
   <style>
     :root {
       --rosa-principal: #e91e63;
@@ -13,163 +11,94 @@
       --amarillo-dorado: #ffeb3b;
       --blanco-puro: #ffffff;
       --gris-claro: #f8f9fa;
-      --fuente-redonda: 'Poppins', sans-serif;
     }
 
-    body { 
-      font-family: var(--fuente-redonda), Arial; 
-      padding: 0; margin: 0; 
-      background-color: var(--gris-claro); 
-      height: 100vh; 
-      display: flex; 
-      flex-direction: column; 
-      overflow-x: hidden; 
-    }
-
-    header { background-color: var(--rosa-principal); color: white; padding: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    header h1 { margin: 0; font-size: 1.5em; text-transform: uppercase; }
-
+    body { font-family: 'Poppins', sans-serif; padding: 0; margin: 0; background-color: var(--gris-claro); display: flex; flex-direction: column; height: 100vh; }
+    header { background-color: var(--rosa-principal); color: white; padding: 10px; text-align: center; }
     .app-container { display: flex; flex: 1; flex-direction: column; overflow-y: auto; }
-
-    .col-productos { padding: 10px; background: white; }
-    .col-carrito { padding: 15px; background: white; border-top: 2px solid #eee; }
-    .col-cobro { padding: 15px; background: #fffde7; border-top: 2px solid #eee; }
-
-    #productos { 
-      display: grid !important; 
-      grid-template-columns: repeat(3, 1fr) !important; 
-      gap: 8px; 
-      width: 100%;
-      box-sizing: border-box;
-      padding: 5px;
-    }
-
-    .card { 
-      background: white; 
-      border-radius: 10px; 
-      padding: 8px; 
-      text-align: center; 
-      border: 1px solid #ddd;
-      box-sizing: border-box; 
-      height: 180px; 
-      display: flex;
-      flex-direction: column; 
-      justify-content: space-between; 
-      align-items: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      position: relative;
-    }
-
-    .card strong { 
-      font-size: 0.75em; 
-      color: #333;
-      height: 32px; 
-      overflow: hidden; 
-      display: flex;
-      align-items: center;
-      line-height: 1.1;
-      order: 1;
-    }
-
-    .card img { 
-      width: 100%; 
-      height: 75px; 
-      object-fit: cover; 
-      border-radius: 6px; 
-      order: 2;
-    }
-
-    .card span {
-      font-size: 0.9em;
-      font-weight: bold;
-      color: var(--rosa-principal);
-      order: 3;
-    }
-
-    /* --- BOTÓN ELIMINAR --- */
-    .card .btn-eliminar { 
-      display: none !important; 
-    }
-
-    /* Solo visible en modo configuración */
-    #productos.modo-config .card .btn-eliminar {
-      display: block !important;
-      background-color: #ff4444;
-      color: white;
-      border: none;
-      padding: 5px;
-      border-radius: 4px;
-      font-size: 0.7em;
-      width: 100%;
-      margin-top: 5px;
-      order: 4;
-      cursor: pointer;
-    }
-
-    #productos.modo-config .card { height: 210px !important; }
-
-    #carrito { list-style: none; padding: 0; }
-    #carrito li { background: #fef1f6; margin-bottom: 8px; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; border-left: 4px solid var(--rosa-principal); }
     
-    .total-seccion { background: #fffde7; padding: 15px; border-radius: 10px; text-align: center; border: 2px solid var(--amarillo-dorado); }
-    .total-monto { font-size: 2em; font-weight: bold; }
+    /* DISEÑO DE PRODUCTOS */
+    #productos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; }
+    .card { 
+      background: white; border-radius: 10px; padding: 8px; text-align: center; border: 1px solid #ddd;
+      display: flex; flex-direction: column; justify-content: space-between; align-items: center; height: 180px;
+    }
+    .card img { width: 100%; height: 70px; object-fit: cover; border-radius: 6px; }
+    .card strong { font-size: 0.75em; height: 30px; display: flex; align-items: center; }
+    
+    /* BOTÓN ELIMINAR (OCULTO POR DEFECTO) */
+    .btn-eliminar { display: none !important; }
+    #productos.modo-config .btn-eliminar { 
+      display: block !important; background: #ff4444; color: white; border: none; 
+      width: 100%; padding: 5px; border-radius: 5px; cursor: pointer; margin-top: 5px;
+    }
+    #productos.modo-config .card { height: 210px; }
 
-    input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 10px; font-size: 1em; }
-    .btn-cobrar { background: var(--rosa-principal); color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-size: 1.2em; font-weight: bold; }
+    /* CARRITO Y COBRO */
+    .col-carrito, .col-cobro { padding: 15px; background: white; border-top: 2px solid #eee; }
+    #carrito { list-style: none; padding: 0; }
+    #carrito li { background: #fef1f6; margin-bottom: 5px; padding: 8px; border-radius: 5px; display: flex; justify-content: space-between; }
+    .btn-cobrar { background: var(--rosa-principal); color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-weight: bold; font-size: 1.1em; }
+    
+    /* BOTONES PAGO RÁPIDO */
+    .pago-rapido { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 10px; }
+    .pago-rapido button { padding: 10px; border: none; border-radius: 5px; color: white; font-weight: bold; }
 
-    .btn-config { position: fixed; bottom: 15px; right: 15px; background: white; border-radius: 50%; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--rosa-principal); z-index: 100; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-
-    #config { display:none; position:fixed; top:5%; left:5%; right:5%; bottom:5%; background:white; padding:20px; border-radius:15px; box-shadow:0 0 50px rgba(0,0,0,0.5); z-index:200; overflow-y:auto; }
+    /* CONFIG Y REPORTES */
+    .btn-config { position: fixed; bottom: 15px; right: 15px; background: white; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--rosa-principal); z-index: 100; }
+    #config { display:none; position:fixed; top:5%; left:5%; width: 90%; height: 90%; background:white; padding:20px; border-radius:15px; z-index:200; overflow-y:auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+    input, select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>BENDITO HELADO</h1>
-</header>
+<header><h1>BENDITO HELADO</h1></header>
 
 <div class="app-container">
   <div class="col-productos">
-    <h3>🍨 Menú de Helados</h3>
     <div id="productos"></div>
   </div>
 
   <div class="col-carrito">
-    <h3>🛒 Pedido</h3>
+    <h3>🛒 Pedido: $<span id="total">0</span></h3>
     <ul id="carrito"></ul>
-    <div class="total-seccion">
-      <span>TOTAL</span>
-      <div class="total-monto">$<span id="total">0</span></div>
-    </div>
   </div>
 
   <div class="col-cobro">
-    <h3>💳 Pago</h3>
-    <input id="pago" type="number" placeholder="¿Con cuánto pagan?" oninput="actualizarCambioManual()">
+    <div class="pago-rapido">
+      <button onclick="pagoRapido('Efectivo')" style="background:#4caf50;">Efectivo</button>
+      <button onclick="pagoRapido('Nequi')" style="background:#7030a0;">Nequi</button>
+      <button onclick="pagoRapido('Daviplata')" style="background:#ff0000;">Daviplata</button>
+    </div>
+    <input id="pago" type="number" placeholder="¿Cuánto recibes?">
     <select id="metodo-pago">
-        <option value="Efectivo">Efectivo</option>
-        <option value="Nequi">Nequi</option>
-        <option value="Daviplata">Daviplata</option>
+      <option value="Efectivo">Efectivo</option>
+      <option value="Nequi">Nequi</option>
+      <option value="Daviplata">Daviplata</option>
     </select>
-    <button onclick="procesarPago()" class="btn-cobrar">COBRAR AHORA</button>
+    <button onclick="procesarPago()" class="btn-cobrar">COBRAR</button>
     <h3 id="cambio" style="text-align:center">Cambio: $0</h3>
+  </div>
+
+  <div style="padding: 20px; background: #f0f0f0;">
+    <button onclick="exportarCSV()" style="background: #28a745; color: white; padding: 10px; width: 100%; border: none; border-radius: 5px;">📥 Descargar Excel (CSV)</button>
+    <h4>Ventas de hoy: <span id="resultado-reporte">$0</span></h4>
+    <h4>Historial Reciente:</h4>
+    <ul id="historial"></ul>
   </div>
 </div>
 
 <div class="btn-config" onclick="toggleConfig()">⚙️</div>
 
 <div id="config">
-  <div style="display:flex; justify-content:space-between">
-    <h2>⚙️ Configuración</h2>
-    <button onclick="toggleConfig()">Cerrar X</button>
-  </div>
-  <div style="margin-top:20px">
-    <h3>Agregar Producto</h3>
-    <input type="text" id="nombre" placeholder="Nombre del helado">
-    <input type="number" id="precio" placeholder="Precio">
-    <input type="file" id="imagen">
-    <button onclick="agregarProducto()" style="width:100%; padding:15px; background:#007bff; color:white; border:none; border-radius:10px">GUARDAR HELADO</button>
-  </div>
+  <button onclick="toggleConfig()" style="float:right">Cerrar X</button>
+  <h2>Configuración</h2>
+  <input type="text" id="nombre" placeholder="Nombre">
+  <input type="number" id="precio" placeholder="Precio">
+  <input type="file" id="imagen">
+  <button onclick="agregarProducto()" style="width:100%; background: #007bff; color: white; padding: 15px; border: none; border-radius: 10px;">GUARDAR HELADO</button>
+  <br><br>
+  <button onclick="limpiarHistorial()" style="background: red; color: white;">BORRAR TODO EL HISTORIAL</button>
 </div>
 
 <script src="renderer.js"></script>
