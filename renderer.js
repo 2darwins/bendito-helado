@@ -1,171 +1,186 @@
 let productos = JSON.parse(localStorage.getItem("productos")) || [];
 let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+let cantidades = JSON.parse(localStorage.getItem("cantidades")) || {};
 let carrito = [];
-let totalActual = 0;
+let total = 0;
 let metodoSeleccionado = "Efectivo";
 
-window.onload = () => {
-    dibujarProductos();
-    actualizarHistorial();
+window.onload = function() {
+    mostrarProductos();
+    mostrarHistorial();
+    mostrarCantidades();
+    actualizarReporteHoy();
 };
 
-function dibujarProductos() {
-    const contenedor = document.getElementById("productos");
+function mostrarProductos() {
+    let contenedor = document.getElementById("productos");
     contenedor.innerHTML = "";
-    productos.forEach((p, i) => {
-        const div = document.createElement("div");
+    productos.forEach((p, index) => {
+        let div = document.createElement("div");
         div.className = "card";
         div.innerHTML = `
             <strong>${p.nombre}</strong>
             <img src="${p.imagen}">
             <span style="color:#e91e63; font-weight:bold;">$${p.precio.toLocaleString()}</span>
-            <button class="btn-eliminar" onclick="event.stopPropagation(); eliminarP(${i})">Eliminar</button>
+            <button class="btn-eliminar" onclick="event.stopPropagation(); eliminarProducto(${index})">Eliminar</button>
         `;
-        div.onclick = () => agregarAlCarrito(p);
+        div.onclick = () => agregarAlCarrito(index);
         contenedor.appendChild(div);
     });
 }
 
-function agregarAlCarrito(p) {
+window.agregarProducto = function() {
+    const nombre = document.getElementById("nombre").value;
+    const precio = parseFloat(document.getElementById("precio").value);
+    const inputImagen = document.getElementById("imagen");
+
+    if (!nombre || isNaN(precio) || inputImagen.files.length === 0) {
+        alert("Faltan datos."); return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        productos.push({ nombre, precio, imagen: e.target.result });
+        localStorage.setItem("productos", JSON.stringify(productos));
+        mostrarProductos();
+        toggleConfig();
+        alert("¡Guardado!");
+    };
+    reader.readAsDataURL(inputImagen.files[0]);
+};
+
+window.eliminarProducto = function(index) {
+    if (confirm("¿Borrar este helado?")) {
+        productos.splice(index, 1);
+        localStorage.setItem("productos", JSON.stringify(productos));
+        mostrarProductos();
+    }
+};
+
+function agregarAlCarrito(index) {
+    let p = productos[index];
     carrito.push(p);
-    totalActual += p.precio;
-    renderCarrito();
+    total += p.precio;
+    actualizarCarrito();
 }
 
-function renderCarrito() {
-    document.getElementById("total-monto").innerText = totalActual.toLocaleString();
-    const lista = document.getElementById("lista-carrito");
+function actualizarCarrito() {
+    document.getElementById("total").innerText = total.toLocaleString();
+    let lista = document.getElementById("carrito");
     lista.innerHTML = "";
-    carrito.slice(-3).forEach((item) => {
-        const li = document.createElement("li");
-        li.innerHTML = `<span>${item.nombre}</span> <b>$${item.precio.toLocaleString()}</b>`;
+    carrito.slice(-3).forEach((p, i) => {
+        let li = document.createElement("li");
+        li.innerHTML = `<span>${p.nombre}</span> <b>$${p.precio.toLocaleString()}</b>`;
         lista.appendChild(li);
     });
-    calcularCambio();
+    actualizarCambioManual();
 }
 
-// LÓGICA DE PAGO FLUIDA
-function seleccionarMetodo(metodo) {
+window.pagoRapido = function(metodo) {
     metodoSeleccionado = metodo;
-    const input = document.getElementById("input-pago");
-    
-    if (metodo === "Efectivo") {
-        input.value = "";
-        input.readOnly = false;
-        input.focus();
+    let inputPago = document.getElementById("pago");
+    if (metodo === 'Efectivo') {
+        inputPago.value = "";
+        inputPago.readOnly = false;
+        inputPago.focus();
     } else {
-        // Nequi o Daviplata: Pago exacto automático
-        input.value = totalActual;
-        input.readOnly = true;
+        inputPago.value = total;
+        inputPago.readOnly = true;
     }
-    calcularCambio();
-}
+    actualizarCambioManual();
+};
 
-function calcularCambio() {
-    const recibido = parseFloat(document.getElementById("input-pago").value) || 0;
-    const textoCambio = document.getElementById("cambio-texto");
-    
-    if (totalActual === 0) {
-        textoCambio.innerText = "";
-        return;
-    }
-
-    if (recibido < totalActual) {
-        textoCambio.innerHTML = `<span style="color:red;">Faltan: $${(totalActual - recibido).toLocaleString()}</span>`;
+window.actualizarCambioManual = function() {
+    let recibido = parseFloat(document.getElementById("pago").value) || 0;
+    let elCambio = document.getElementById("cambio");
+    if (recibido >= total) {
+        elCambio.innerHTML = `<span style="color:green;">Cambio: $${(recibido - total).toLocaleString()}</span>`;
     } else {
-        const cambio = recibido - totalActual;
-        textoCambio.innerHTML = `<span style="color:green;">Cambio: $${cambio.toLocaleString()}</span>`;
+        elCambio.innerHTML = `<span style="color:red;">Faltan: $${(total - recibido).toLocaleString()}</span>`;
     }
-}
+};
 
-function finalizarVenta() {
-    const recibido = parseFloat(document.getElementById("input-pago").value) || 0;
-    if (totalActual === 0) return alert("El carrito está vacío");
-    if (recibido < totalActual) return alert("El dinero recibido es insuficiente");
+window.procesarPago = function() {
+    let recibido = parseFloat(document.getElementById("pago").value) || 0;
+    if (total === 0) return alert("Carrito vacío");
+    if (recibido < total) return alert("Dinero insuficiente");
 
-    const nuevaVenta = {
+    let nombres = carrito.map(p => p.nombre).join(", ");
+    let venta = {
         fecha: new Date().toLocaleDateString(),
-        hora: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-        total: totalActual,
+        hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+        detalle: nombres,
+        total: total,
         metodo: metodoSeleccionado
     };
 
-    ventas.push(nuevaVenta);
+    ventas.push(venta);
+    carrito.forEach(p => cantidades[p.nombre] = (cantidades[p.nombre] || 0) + 1);
+
     localStorage.setItem("ventas", JSON.stringify(ventas));
+    localStorage.setItem("cantidades", JSON.stringify(cantidades));
+
+    alert("Venta Exitosa. Cambio: $" + (recibido - total).toLocaleString());
     
-    alert(`Venta Exitosa (${metodoSeleccionado}). Cambio: $${(recibido - totalActual).toLocaleString()}`);
-    
-    // Resetear todo
-    carrito = [];
-    totalActual = 0;
-    document.getElementById("input-pago").value = "";
-    renderCarrito();
-    actualizarHistorial();
-}
+    carrito = []; total = 0;
+    actualizarCarrito();
+    mostrarHistorial();
+    mostrarCantidades();
+    actualizarReporteHoy();
+    document.getElementById("pago").value = "";
+};
 
-// EXCEL Y REPORTES
-function actualizarHistorial() {
-    const hoy = new Date().toLocaleDateString();
-    const sumaHoy = ventas.filter(v => v.fecha === hoy).reduce((s, v) => s + v.total, 0);
-    document.getElementById("resumen-hoy").innerText = "$" + sumaHoy.toLocaleString();
-
-    const lista = document.getElementById("historial-lista");
-    lista.innerHTML = "";
-    ventas.slice(-5).reverse().forEach(v => {
-        const li = document.createElement("li");
-        li.innerText = `${v.hora} - ${v.metodo}: $${v.total.toLocaleString()}`;
-        lista.appendChild(li);
-    });
-}
-
-function exportarCSV() {
-    if (ventas.length === 0) return alert("No hay ventas para exportar");
-    let csv = "\ufeffFecha,Hora,Metodo,Total\n";
-    ventas.forEach(v => {
-        csv += `${v.fecha},${v.hora},${v.metodo},${v.total}\n`;
-    });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
+window.exportarCSV = function() {
+    let csv = "\ufeffFecha,Hora,Detalle,Metodo,Total\n";
+    ventas.forEach(v => csv += `${v.fecha},${v.hora},"${v.detalle}",${v.metodo},${v.total}\n`);
+    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    let link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "Reporte_Ventas_Bendito.csv";
+    link.download = "Reporte_Ventas.csv";
     link.click();
+};
+
+function mostrarHistorial() {
+    let h = document.getElementById("historial");
+    h.innerHTML = "";
+    ventas.slice(-5).reverse().forEach(v => {
+        let li = document.createElement("li");
+        li.innerText = `${v.hora} - ${v.metodo}: $${v.total.toLocaleString()}`;
+        h.appendChild(li);
+    });
 }
 
-// CONFIGURACIÓN
-function abrirConfig() {
-    const m = document.getElementById("modal-config");
-    const p = document.getElementById("productos");
-    if (m.style.display === "block") {
-        m.style.display = "none";
-        p.classList.remove("modo-config");
+function mostrarCantidades() {
+    let c = document.getElementById("cantidades");
+    c.innerHTML = "";
+    for (let p in cantidades) {
+        let li = document.createElement("li");
+        li.innerText = `${p}: ${cantidades[p]} uds`;
+        c.appendChild(li);
+    }
+}
+
+function actualizarReporteHoy() {
+    let hoy = new Date().toLocaleDateString();
+    let suma = ventas.filter(v => v.fecha === hoy).reduce((s, v) => s + v.total, 0);
+    document.getElementById("reporte-hoy").innerText = "$" + suma.toLocaleString();
+}
+
+window.toggleConfig = function() {
+    let c = document.getElementById("config");
+    let p = document.getElementById("productos");
+    if (c.style.display === "block") {
+        c.style.display = "none"; p.classList.remove("modo-config");
     } else {
-        m.style.display = "block";
-        p.classList.add("modo-config");
+        c.style.display = "block"; p.classList.add("modo-config");
     }
-}
+};
 
-function guardarNuevoProducto() {
-    const nombre = document.getElementById("nuevo-nombre").value;
-    const precio = parseFloat(document.getElementById("nuevo-precio").value);
-    const imgFile = document.getElementById("nueva-imagen").files[0];
-
-    if (!nombre || !precio || !imgFile) return alert("Completa todos los datos");
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        productos.push({ nombre, precio, imagen: e.target.result });
-        localStorage.setItem("productos", JSON.stringify(productos));
-        dibujarProductos();
-        abrirConfig();
-        alert("¡Producto Agregado!");
-    };
-    reader.readAsDataURL(imgFile);
-}
-
-function eliminarP(index) {
-    if (confirm("¿Eliminar este helado?")) {
-        productos.splice(index, 1);
-        localStorage.setItem("productos", JSON.stringify(productos));
-        dibujarProductos();
+window.limpiarHistorial = function() {
+    if(confirm("¿Borrar historial?")) {
+        ventas = []; cantidades = {};
+        localStorage.setItem("ventas", "[]");
+        localStorage.setItem("cantidades", "{}");
+        location.reload();
     }
-}
+};
