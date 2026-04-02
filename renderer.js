@@ -64,6 +64,8 @@ window.actualizarCambio = function() {
 
 window.pagoRapido = function(metodo) {
     let input = document.getElementById("pago");
+    // Guardamos el método en un atributo temporal para el Excel
+    input.dataset.metodo = metodo; 
     if (metodo === 'Efectivo') { input.value = ""; input.readOnly = false; input.focus(); } 
     else { input.value = total; input.readOnly = true; }
     actualizarCambio();
@@ -74,12 +76,20 @@ window.procesarPago = function() {
     let pago = parseFloat(document.getElementById("pago").value) || 0;
     if (pago < total) return alert("Pago insuficiente");
 
+    let metodoUsado = document.getElementById("pago").dataset.metodo || "Efectivo";
+    let fechaActual = new Date();
+
     let venta = {
-        fecha: new Date().toLocaleDateString(),
-        hora: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-        detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", "),
-        total: total
+        fecha: fechaActual.toLocaleDateString(),
+        dia: fechaActual.getDate(),
+        mes: fechaActual.getMonth() + 1,
+        año: fechaActual.getFullYear(),
+        hora: fechaActual.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+        detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(" - "),
+        total: total,
+        metodo: metodoUsado
     };
+    
     ventas.push(venta);
     carrito.forEach(p => {
         contadorProductos[p.nombre] = (contadorProductos[p.nombre] || 0) + p.cantidad;
@@ -94,6 +104,7 @@ window.procesarPago = function() {
     carrito = []; total = 0;
     actualizarCarrito();
     document.getElementById("pago").value = "";
+    document.getElementById("pago").dataset.metodo = "";
     actualizarTop();
     mostrarCantidades();
 };
@@ -129,4 +140,67 @@ window.toggleConfig = function() {
     else { c.style.display = "block"; p.classList.add("modo-config"); }
 };
 
-// ... (exportarCSV, limpiarHistorial, actualizarTop se mantienen de tu código original) ...
+// =====================
+// FUNCIONES DE REPORTES (AGREGADAS)
+// =====================
+
+window.exportarCSV = function() {
+    if (ventas.length === 0) return alert("No hay datos");
+    
+    let csv = "\uFEFF"; // Para que Excel lea bien tildes
+    csv += "FECHA,MES,AÑO,HORA,PRODUCTOS,VALOR TOTAL,METODO PAGO\n";
+    
+    ventas.forEach(v => {
+        csv += `${v.fecha},${v.mes},${v.año},${v.hora},"${v.detalle}",${v.total},${v.metodo}\n`;
+    });
+
+    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "Reporte_Ventas_Bendito_Helado.csv";
+    link.click();
+};
+
+function actualizarTop() {
+    let topElement = document.getElementById("top");
+    if (!topElement) return;
+    let max = 0;
+    let productoTop = "N/A";
+    for (let p in contadorProductos) {
+        if (contadorProductos[p] > max) {
+            max = contadorProductos[p];
+            productoTop = p;
+        }
+    }
+    topElement.innerText = `${productoTop} (${max} unidades)`;
+    
+    // Total ventas hoy
+    let hoy = new Date().toLocaleDateString();
+    let totalHoy = ventas.filter(v => v.fecha === hoy).reduce((sum, v) => sum + v.total, 0);
+    document.getElementById("reporte-hoy").innerText = "$" + totalHoy.toLocaleString();
+}
+
+function mostrarCantidades() {
+    let lista = document.getElementById("cantidades");
+    if (!lista) return;
+    lista.innerHTML = "";
+    for (let p in cantidades) {
+        let li = document.createElement("li");
+        li.innerText = `${p}: ${cantidades[p]} vendidos`;
+        lista.appendChild(li);
+    }
+}
+
+window.limpiarHistorial = function() {
+    if (confirm("¿Seguro que quieres borrar TODAS las ventas? Esto no se puede deshacer.")) {
+        ventas = [];
+        contadorProductos = {};
+        cantidades = {};
+        localStorage.setItem("ventas", JSON.stringify(ventas));
+        localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
+        localStorage.setItem("cantidades", JSON.stringify(cantidades));
+        actualizarTop();
+        mostrarCantidades();
+        alert("Historial borrado");
+    }
+};
