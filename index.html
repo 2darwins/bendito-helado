@@ -28,7 +28,7 @@
     .recibo-top {
       background: #fff;
       border-bottom: 2px solid #ddd;
-      height: 80px; /* Tamaño pequeño para que no estorbe */
+      height: 80px; 
       overflow-y: auto;
       padding: 5px 15px;
       font-family: monospace;
@@ -44,21 +44,22 @@
 
     /* 2. PRODUCTOS (CENTRO, SCROLLABLE) */
     .contenedor-productos {
-      flex: 1; /* Ocupa el espacio que sobra */
+      flex: 1; 
       overflow-y: auto;
       padding: 10px;
     }
     #productos { 
       display: grid; 
-      grid-template-columns: repeat(3, 1fr); /* 3 columnas */
+      grid-template-columns: repeat(3, 1fr); 
       gap: 6px; 
     }
 
    .card { 
       background: #add8e6; border: 1px solid #87ceeb; border-radius: 4px; padding: 3px; 
-      text-align: center; height: 105px; /* Antes 120px, ahora más pequeño */
+      text-align: center; height: 105px; 
       display: flex; flex-direction: column; justify-content: space-between;
       cursor: pointer;
+      position: relative;
     }
     .card strong { font-size: 0.6em; height: 18px; line-height: 1; }
     .card img { width: 100%; height: 45px; object-fit: cover; border-radius: 3px; }
@@ -66,7 +67,7 @@
 
     /* 3. PANEL DE PAGO (ABAJO, FIJO) */
     .panel-pago {
-      background: #fffde7; /* Color cremita */
+      background: #fffde7; 
       padding: 10px;
       border-top: 2px solid #ffe082;
       box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
@@ -108,13 +109,33 @@
       font-size: 1.2em; 
     }
 
-    /* BOTONES ELIMINAR (OCULTOS) */
-    .btn-eliminar { display: none !important; background: red; color: white; border: none; font-size: 9px; padding: 2px; }
+    /* BOTONES ELIMINAR (OCULTOS HASTA ACTIVAR CONFIG) */
+    .btn-eliminar { 
+        display: none !important; 
+        background: red; 
+        color: white; 
+        border: none; 
+        font-size: 9px; 
+        padding: 4px; 
+        border-radius: 3px;
+        margin-top: 2px;
+        font-weight: bold;
+    }
     #productos.modo-config .btn-eliminar { display: block !important; }
 
-    /* CONFIG */
-    .config-btn { text-align: center; padding: 5px; background: #eee; font-size: 0.8em; }
-    #config { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding:20px; overflow-y:auto; box-sizing:border-box; }
+    /* CONFIGURACIÓN */
+    .config-btn { text-align: center; padding: 8px; background: #eee; font-size: 0.8em; cursor: pointer; border-top: 1px solid #ddd; }
+    #config { 
+        display: none; 
+        position: fixed; 
+        top:0; left:0; 
+        width:100%; height:100%; 
+        background:white; 
+        z-index:2000; 
+        padding:20px; 
+        overflow-y:auto; 
+        box-sizing:border-box; 
+    }
   </style>
 </head>
 <body>
@@ -150,31 +171,50 @@
   <button onclick="procesarPago()" class="btn-cobrar">FINALIZAR VENTA</button>
 </div>
 
-<div class="config-btn" onclick="toggleConfig()">⚙️ CONFIGURACIÓN</div>
+<div class="config-btn" onclick="toggleConfig()">⚙️ ADMINISTRACIÓN Y REPORTES</div>
 
 <div id="config">
-  <button onclick="toggleConfig()" style="float:right;">X</button>
-  <h3>CONFIGURACIÓN</h3>
-  
-  <div style="background: #f0f0f0; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ccc;">
-    <p style="margin: 5px 0;"><strong>Ventas Hoy:</strong> <span id="reporte-hoy">$0</span></p>
-    <p style="margin: 5px 0;"><strong>Mes Actual:</strong> <span id="reporte-mes">$0</span></p>
-    <p style="margin: 5px 0;"><strong>Mes Pasado:</strong> <span id="reporte-mes-pasado">$0</span></p>
-    <p style="margin: 5px 0; color: #e91e63;"><strong>Top:</strong> <span id="top">N/A</span></p>
-  </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e91e63; margin-bottom: 15px; padding-bottom: 10px;">
+        <h2 style="margin: 0; color: #e91e63;">ADMINISTRACIÓN</h2>
+        <button onclick="toggleConfig()" style="background: #333; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: bold;">X</button>
+    </div>
 
-  <input type="text" id="nombre" placeholder="Nombre">
-  <input type="number" id="precio" placeholder="Precio">
-  <input type="file" id="imagen">
-  <button onclick="agregarProducto()" style="width: 100%; padding: 10px; background: #e91e63; color: white; border: none; border-radius: 5px; margin-top: 5px;">GUARDAR PRODUCTO</button>
-  
-  <hr>
-  
-  <button onclick="exportarCSV()" style="background:green; color:white; width:100%; padding:10px; border: none; border-radius: 5px;">EXPORTAR EXCEL</button>
-  <button onclick="limpiarHistorial()" style="background:red; color:white; width:100%; padding:10px; margin-top:10px; border: none; border-radius: 5px;">LIMPIAR TODO EL HISTORIAL</button>
-  
-  <h4>Cantidades Totales:</h4>
-  <ul id="cantidades" style="font-size: 0.9em; background: #fff; padding: 10px; border-radius: 5px; border: 1px solid #eee;"></ul>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+        <div style="background: #e3f2fd; padding: 10px; border-radius: 8px; border-left: 5px solid #2196f3;">
+            <small>Ventas Hoy</small>
+            <div id="reporte-hoy" style="font-weight: bold; font-size: 1.1em;">$0</div>
+        </div>
+        <div style="background: #f1f8e9; padding: 10px; border-radius: 8px; border-left: 5px solid #4caf50;">
+            <small>Mes Actual</small>
+            <div id="reporte-mes" style="font-weight: bold; font-size: 1.1em;">$0</div>
+        </div>
+        <div style="background: #fff3e0; padding: 10px; border-radius: 8px; border-left: 5px solid #ff9800;">
+            <small>Mes Pasado</small>
+            <div id="reporte-mes-pasado" style="font-weight: bold; font-size: 1.1em;">$0</div>
+        </div>
+        <div style="background: #f3e5f5; padding: 10px; border-radius: 8px; border-left: 5px solid #9c27b0;">
+            <small>Más Vendido</small>
+            <div id="top" style="font-weight: bold; font-size: 0.9em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">N/A</div>
+        </div>
+    </div>
+
+    <div style="background: #eee; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <h4 style="margin-top: 0;">+ AGREGAR NUEVOS PRODUCTOS</h4>
+        <input type="text" id="nombre" placeholder="Nombre del helado" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+        <input type="number" id="precio" placeholder="Precio ($)" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+        <input type="file" id="imagen" style="font-size: 0.8em; margin-bottom: 10px; width: 100%;">
+        <button onclick="agregarProducto()" style="width: 100%; padding: 12px; background: #e91e63; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">GUARDAR PRODUCTO</button>
+    </div>
+
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button onclick="exportarCSV()" style="flex: 1; background: #2e7d32; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer;">DESCARGAR EXCEL</button>
+        <button onclick="limpiarHistorial()" style="flex: 1; background: #c62828; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer;">BORRAR TODO</button>
+    </div>
+
+    <div style="background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+        <h4 style="margin-top:0; border-bottom: 1px solid #eee; padding-bottom: 5px;">Inventario Vendido (Unidades):</h4>
+        <ul id="cantidades" style="list-style: none; padding: 0; font-size: 0.9em; margin: 0;"></ul>
+    </div>
 </div>
 
 <script src="renderer.js"></script>
