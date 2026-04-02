@@ -155,15 +155,26 @@
 <div id="config">
   <button onclick="toggleConfig()" style="float:right;">X</button>
   <h3>CONFIGURACIÓN</h3>
+  
+  <div style="background: #f0f0f0; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ccc;">
+    <p style="margin: 5px 0;"><strong>Ventas Hoy:</strong> <span id="reporte-hoy">$0</span></p>
+    <p style="margin: 5px 0;"><strong>Mes Actual:</strong> <span id="reporte-mes">$0</span></p>
+    <p style="margin: 5px 0;"><strong>Mes Pasado:</strong> <span id="reporte-mes-pasado">$0</span></p>
+    <p style="margin: 5px 0; color: #e91e63;"><strong>Top:</strong> <span id="top">N/A</span></p>
+  </div>
+
   <input type="text" id="nombre" placeholder="Nombre">
   <input type="number" id="precio" placeholder="Precio">
   <input type="file" id="imagen">
-  <button onclick="agregarProducto()">GUARDAR</button>
+  <button onclick="agregarProducto()" style="width: 100%; padding: 10px; background: #e91e63; color: white; border: none; border-radius: 5px; margin-top: 5px;">GUARDAR PRODUCTO</button>
+  
   <hr>
-  <button onclick="exportarCSV()" style="background:green; color:white; width:100%; padding:10px;">EXPORTAR EXCEL</button>
-  <button onclick="limpiarHistorial()" style="background:red; color:white; width:100%; padding:10px; margin-top:10px;">LIMPIAR TODO</button>
-  <h4>Cantidades:</h4>
-  <ul id="cantidades"></ul>
+  
+  <button onclick="exportarCSV()" style="background:green; color:white; width:100%; padding:10px; border: none; border-radius: 5px;">EXPORTAR EXCEL</button>
+  <button onclick="limpiarHistorial()" style="background:red; color:white; width:100%; padding:10px; margin-top:10px; border: none; border-radius: 5px;">LIMPIAR TODO EL HISTORIAL</button>
+  
+  <h4>Cantidades Totales:</h4>
+  <ul id="cantidades" style="font-size: 0.9em; background: #fff; padding: 10px; border-radius: 5px; border: 1px solid #eee;"></ul>
 </div>
 
 <script src="renderer.js"></script>
