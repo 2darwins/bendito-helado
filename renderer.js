@@ -1,5 +1,6 @@
 let productos = JSON.parse(localStorage.getItem("productos")) || [];
 let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+let clientes = JSON.parse(localStorage.getItem("clientes")) || {};
 let contadorProductos = JSON.parse(localStorage.getItem("contadorProductos")) || {};
 let cantidades = JSON.parse(localStorage.getItem("cantidades")) || {};
 let carrito = [];
@@ -8,31 +9,26 @@ let total = 0;
 window.onload = function() {
     mostrarProductos();
     actualizarTop();
-    mostrarCantidades();
 };
 
 function mostrarProductos() {
     let contenedor = document.getElementById("productos");
     let listaEliminar = document.getElementById("lista-eliminar");
     if (!contenedor) return;
-    
     contenedor.innerHTML = "";
     if (listaEliminar) listaEliminar.innerHTML = "";
 
     productos.forEach((p, index) => {
-        // Tarjeta para vender
         let div = document.createElement("div");
         div.className = "card";
         div.innerHTML = `<strong>${p.nombre}</strong><img src="${p.imagen}"><span>$${p.precio.toLocaleString()}</span>`;
         div.onclick = () => agregarAlCarrito(index);
         contenedor.appendChild(div);
 
-        // Item para eliminar en config
         if (listaEliminar) {
             let item = document.createElement("div");
             item.style = "display: flex; align-items: center; background: #f9f9f9; padding: 5px; border-radius: 5px; border: 1px solid #eee; gap: 5px;";
-            item.innerHTML = `<img src="${p.imagen}" style="width: 25px; height: 25px; object-fit: cover; border-radius: 3px;">
-                              <span style="flex: 1; font-size: 0.7em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.nombre}</span>
+            item.innerHTML = `<span style="flex: 1; font-size: 0.7em;">${p.nombre}</span>
                               <button onclick="eliminarProductoMenu(${index})" style="background:red; color:white; border:none; border-radius:3px; padding: 4px 6px; font-size: 0.7em;">🗑️</button>`;
             listaEliminar.appendChild(item);
         }
@@ -50,17 +46,13 @@ function agregarAlCarrito(index) {
 
 function actualizarCarrito() {
     let lista = document.getElementById("carrito");
-    if (!lista) return;
     lista.innerHTML = "";
     carrito.forEach((p, index) => {
         let li = document.createElement("li");
-        li.innerHTML = `<span>${p.cantidad} x $${p.precio.toLocaleString()}</span> 
-                        <span>${p.nombre}</span> 
-                        <button onclick="eliminarDelCarrito(${index})" style="color:red; border:none; background:none; font-weight:bold; cursor:pointer;">X</button>`;
+        li.innerHTML = `<span>${p.cantidad} x $${p.precio.toLocaleString()}</span> <span>${p.nombre}</span> <button onclick="eliminarDelCarrito(${index})" style="color:red; border:none; background:none;">X</button>`;
         lista.appendChild(li);
     });
     document.getElementById("total").innerText = total.toLocaleString();
-    actualizarCambio();
 }
 
 window.eliminarDelCarrito = function(index) {
@@ -79,28 +71,77 @@ window.actualizarCambio = function() {
 window.pagoRapido = function(metodo) {
     let input = document.getElementById("pago");
     input.dataset.metodo = metodo; 
-    if (metodo === 'Efectivo') { input.value = ""; input.readOnly = false; input.focus(); } 
-    else { input.value = total; input.readOnly = true; }
+    input.value = (metodo === 'Efectivo') ? "" : total;
     actualizarCambio();
 };
 
+// --- GESTIÓN DE CLIENTES ---
+window.buscarCliente = function() {
+    let ced = document.getElementById("cliente-cedula").value;
+    let extra = document.getElementById("datos-cliente-extra");
+    if (clientes[ced]) {
+        document.getElementById("cliente-nombre").value = clientes[ced].nombre;
+        document.getElementById("cliente-correo").value = clientes[ced].correo;
+        extra.style.display = "flex";
+    } else {
+        extra.style.display = (ced.length > 3) ? "flex" : "none";
+    }
+};
+
+window.registrarCliente = function() {
+    let ced = document.getElementById("cliente-cedula").value;
+    let nom = document.getElementById("cliente-nombre").value;
+    let cor = document.getElementById("cliente-correo").value;
+    if (!ced || !nom || !cor) return alert("Datos incompletos");
+    clientes[ced] = { nombre: nom, correo: cor };
+    localStorage.setItem("clientes", JSON.stringify(clientes));
+    alert("Cliente registrado ✅");
+};
+
+// --- FACTURA PRO ---
+function enviarFacturaEmail(venta, cliente, itemsCarrito) {
+    let detalleTxt = itemsCarrito.map(p => `${p.nombre}\n${p.cantidad}x$${p.precio.toLocaleString()} $${(p.cantidad * p.precio).toLocaleString()}`).join("\n\n");
+    
+    let asunto = encodeURIComponent(`Recibo Bendito Helado - ${venta.recibo}`);
+    let cuerpo = encodeURIComponent(`"Mira Helado positivo a las cosas" 🤙
+
+Bendito Helado 🤤🍦
+Cr 2 # 13-75
+Cota Cundinamarca
+
+Fecha: ${venta.fecha} ${venta.hora}
+Número de recibo: ${venta.recibo}
+Caja registradora: EP-VNBI
+
+---------------------------
+${detalleTxt}
+---------------------------
+
+Total
+$${venta.total.toLocaleString()}
+
+Gracias por su compra! 🤗`);
+
+    window.location.href = `mailto:${cliente.correo}?subject=${asunto}&body=${cuerpo}`;
+}
+
 window.procesarPago = function() {
     if (total === 0) return;
-    let pago = parseFloat(document.getElementById("pago").value) || 0;
-    if (pago < total) return alert("Pago insuficiente");
+    let pagoVal = parseFloat(document.getElementById("pago").value) || 0;
+    if (pagoVal < total) return alert("Pago insuficiente");
 
-    let metodoUsado = document.getElementById("pago").dataset.metodo || "Efectivo";
     let ahora = new Date();
+    let numRecibo = "VNBI-" + Math.floor(Math.random() * 999);
     let venta = {
         fecha: ahora.toLocaleDateString(),
-        dia: ahora.getDate(), mes: ahora.getMonth() + 1, año: ahora.getFullYear(),
+        mes: ahora.getMonth() + 1, año: ahora.getFullYear(),
         hora: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-        detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(" - "),
-        total: total, metodo: metodoUsado
+        detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", "),
+        total: total, recibo: numRecibo, metodo: document.getElementById("pago").dataset.metodo || "Efectivo"
     };
-    
+
     ventas.push(venta);
-    carrito.forEach(p => {
+    carrito.forEach(p => { 
         contadorProductos[p.nombre] = (contadorProductos[p.nombre] || 0) + p.cantidad;
         cantidades[p.nombre] = (cantidades[p.nombre] || 0) + p.cantidad;
     });
@@ -109,36 +150,39 @@ window.procesarPago = function() {
     localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
     localStorage.setItem("cantidades", JSON.stringify(cantidades));
 
-    alert("¡Venta exitosa!");
+    // Revisar si hay cliente para enviar factura
+    let ced = document.getElementById("cliente-cedula").value;
+    if (ced && clientes[ced]) {
+        if (confirm("¿Enviar factura por correo?")) {
+            enviarFacturaEmail(venta, clientes[ced], carrito);
+        }
+    }
+
+    alert("Venta Exitosa ✅");
     carrito = []; total = 0;
     document.getElementById("pago").value = "";
-    document.getElementById("cambio").innerText = "0";
+    document.getElementById("cliente-cedula").value = "";
+    document.getElementById("datos-cliente-extra").style.display = "none";
     actualizarCarrito();
     actualizarTop();
-    mostrarCantidades();
 };
 
 window.agregarProducto = function() {
-    let nombre = document.getElementById("nombre").value;
-    let precio = parseFloat(document.getElementById("precio").value);
+    let nom = document.getElementById("nombre").value;
+    let pre = parseFloat(document.getElementById("precio").value);
     let img = document.getElementById("imagen").files[0];
-    if (!nombre || !precio || !img) return alert("Faltan datos");
-
+    if (!nom || !pre || !img) return alert("Faltan datos");
     let reader = new FileReader();
-    reader.onload = function(e) {
-        productos.push({ nombre, precio, imagen: e.target.result });
+    reader.onload = (e) => {
+        productos.push({ nombre: nom, precio: pre, imagen: e.target.result });
         localStorage.setItem("productos", JSON.stringify(productos));
         mostrarProductos();
     };
     reader.readAsDataURL(img);
 };
 
-window.eliminarProductoMenu = function(index) {
-    if(confirm("¿Borrar helado del menú?")) {
-        productos.splice(index, 1);
-        localStorage.setItem("productos", JSON.stringify(productos));
-        mostrarProductos();
-    }
+window.eliminarProductoMenu = function(i) {
+    if(confirm("¿Eliminar?")) { productos.splice(i, 1); localStorage.setItem("productos", JSON.stringify(productos)); mostrarProductos(); }
 };
 
 window.toggleConfig = function() {
@@ -146,30 +190,15 @@ window.toggleConfig = function() {
     c.style.display = (c.style.display === "block") ? "none" : "block";
 };
 
-window.exportarCSV = function() {
-    if (ventas.length === 0) return alert("No hay ventas");
-    let csv = "\uFEFFFECHA,HORA,PRODUCTOS,TOTAL,METODO\n";
-    ventas.forEach(v => { csv += `${v.fecha},${v.hora},"${v.detalle}",${v.total},${v.metodo}\n`; });
-    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    let url = URL.createObjectURL(blob);
-    let link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "Ventas.csv");
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-};
-
 function actualizarTop() {
-    let ahora = new Date();
-    let hoyStr = ahora.toLocaleDateString();
-    let mesAct = ahora.getMonth() + 1;
-    let añoAct = ahora.getFullYear();
-    let mesPas = ahora.getMonth();
-    let añoPas = mesPas === 0 ? añoAct - 1 : añoAct;
-    if (mesPas === 0) mesPas = 12;
-
+    let hoy = new Date().toLocaleDateString();
     let tHoy = 0, tMes = 0, tPas = 0;
+    let mesAct = new Date().getMonth() + 1, añoAct = new Date().getFullYear();
+    let mesPas = (mesAct === 1) ? 12 : mesAct - 1;
+    let añoPas = (mesAct === 1) ? añoAct - 1 : añoAct;
+
     ventas.forEach(v => {
-        if (v.fecha === hoyStr) tHoy += v.total;
+        if (v.fecha === hoy) tHoy += v.total;
         if (v.mes === mesAct && v.año === añoAct) tMes += v.total;
         if (v.mes === mesPas && v.año === añoPas) tPas += v.total;
     });
@@ -177,29 +206,23 @@ function actualizarTop() {
     document.getElementById("reporte-hoy").innerText = "$" + tHoy.toLocaleString();
     document.getElementById("reporte-mes").innerText = "$" + tMes.toLocaleString();
     document.getElementById("reporte-mes-pasado").innerText = "$" + tPas.toLocaleString();
-
-    let max = 0, pTop = "N/A";
-    for (let p in contadorProductos) { if (contadorProductos[p] > max) { max = contadorProductos[p]; pTop = p; } }
-    document.getElementById("top").innerText = `${pTop} (${max} uds)`;
 }
 
-function mostrarCantidades() {
-    let lista = document.getElementById("cantidades");
-    if (!lista) return;
-    lista.innerHTML = "";
-    for (let p in cantidades) {
-        let li = document.createElement("li");
-        li.innerText = `${p}: ${cantidades[p]} vendidos`;
-        lista.appendChild(li);
-    }
-}
+window.exportarCSV = function() {
+    let csv = "\uFEFFFECHA,RECIBO,DETALLE,TOTAL\n";
+    ventas.forEach(v => { csv += `${v.fecha},${v.recibo},"${v.detalle}",${v.total}\n`; });
+    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "Ventas_Bendito.csv";
+    link.click();
+};
 
 window.limpiarHistorial = function() {
-    if (confirm("¿Borrar historial de ventas?")) {
-        ventas = []; contadorProductos = {}; cantidades = {};
-        localStorage.setItem("ventas", JSON.stringify(ventas));
-        localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
-        localStorage.setItem("cantidades", JSON.stringify(cantidades));
-        actualizarTop(); mostrarCantidades();
+    if (confirm("¿Borrar todo?")) { 
+        ventas = []; contadorProductos = {}; 
+        localStorage.setItem("ventas", JSON.stringify(ventas)); 
+        localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos)); 
+        actualizarTop(); 
     }
 };
