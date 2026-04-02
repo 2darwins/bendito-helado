@@ -43,16 +43,18 @@ function actualizarCarrito() {
     carrito.forEach((p, index) => {
         let li = document.createElement("li");
         li.innerHTML = `<span>${p.cantidad} x $${p.precio.toLocaleString()}</span> 
-                <span>${p.nombre}</span> 
-                <button onclick="eliminarDelCarrito(${index})" style="color:red; border:none; background:none; font-weight:bold; cursor:pointer;">X</button>`;
+                        <span>${p.nombre}</span> 
+                        <button onclick="eliminarDelCarrito(${index})" style="color:red; border:none; background:none; font-weight:bold; cursor:pointer;">X</button>`;
+        lista.appendChild(li); // <-- Agregado para que se vea el producto en el recibo
     });
     document.getElementById("total").innerText = total.toLocaleString();
     actualizarCambio();
 }
 
 window.eliminarDelCarrito = function(index) {
-    total -= carrito[index].precio;
-    if (carrito[index].cantidad > 1) { carrito[index].cantidad--; } 
+    let item = carrito[index];
+    total -= item.precio;
+    if (item.cantidad > 1) { item.cantidad--; } 
     else { carrito.splice(index, 1); }
     actualizarCarrito();
 }
@@ -65,7 +67,6 @@ window.actualizarCambio = function() {
 
 window.pagoRapido = function(metodo) {
     let input = document.getElementById("pago");
-    // Guardamos el método en un atributo temporal para el Excel
     input.dataset.metodo = metodo; 
     if (metodo === 'Efectivo') { input.value = ""; input.readOnly = false; input.focus(); } 
     else { input.value = total; input.readOnly = true; }
@@ -74,8 +75,8 @@ window.pagoRapido = function(metodo) {
 
 window.procesarPago = function() {
     if (total === 0) return;
-    let pago = parseFloat(document.getElementById("pago").value) || 0;
-    if (pago < total) return alert("Pago insuficiente");
+    let pagoVal = parseFloat(document.getElementById("pago").value) || 0;
+    if (pagoVal < total) return alert("Pago insuficiente");
 
     let metodoUsado = document.getElementById("pago").dataset.metodo || "Efectivo";
     let fechaActual = new Date();
@@ -89,8 +90,6 @@ window.procesarPago = function() {
         detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(" - "),
         total: total,
         metodo: metodoUsado
-document.getElementById("pago").value = "";
-document.getElementById("cambio").innerText = "0";
     };
     
     ventas.push(venta);
@@ -104,10 +103,15 @@ document.getElementById("cambio").innerText = "0";
     localStorage.setItem("cantidades", JSON.stringify(cantidades));
 
     alert("¡Venta exitosa!");
-    carrito = []; total = 0;
-    actualizarCarrito();
+    
+    // Limpieza de interfaz
+    carrito = []; 
+    total = 0;
     document.getElementById("pago").value = "";
     document.getElementById("pago").dataset.metodo = "";
+    document.getElementById("cambio").innerText = "0"; // Limpia el cambio
+    
+    actualizarCarrito();
     actualizarTop();
     mostrarCantidades();
 };
@@ -143,10 +147,6 @@ window.toggleConfig = function() {
     else { c.style.display = "block"; p.classList.add("modo-config"); }
 };
 
-// =====================
-// FUNCIONES DE REPORTES (AGREGADAS)
-// =====================
-
 window.exportarCSV = function() {
     if (ventas.length === 0) return alert("No hay ventas");
     
@@ -160,9 +160,9 @@ window.exportarCSV = function() {
     let link = document.createElement("a");
     link.href = url;
     link.setAttribute("download", "Reporte_Ventas.csv");
-    document.body.appendChild(link); // Lo añadimos al cuerpo para que el cel lo vea
+    document.body.appendChild(link); 
     link.click();
-    document.body.removeChild(link); // Lo borramos después de usarlo
+    document.body.removeChild(link);
 };
 
 function actualizarTop() {
@@ -178,7 +178,6 @@ function actualizarTop() {
     }
     topElement.innerText = `${productoTop} (${max} unidades)`;
     
-    // Total ventas hoy
     let hoy = new Date().toLocaleDateString();
     let totalHoy = ventas.filter(v => v.fecha === hoy).reduce((sum, v) => sum + v.total, 0);
     document.getElementById("reporte-hoy").innerText = "$" + totalHoy.toLocaleString();
