@@ -150,7 +150,6 @@ window.procesarPago = function() {
     localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
     localStorage.setItem("cantidades", JSON.stringify(cantidades));
 
-    // Revisar si hay cliente para enviar factura
     let ced = document.getElementById("cliente-cedula").value;
     if (ced && clientes[ced]) {
         if (confirm("¿Enviar factura por correo?")) {
@@ -190,6 +189,7 @@ window.toggleConfig = function() {
     c.style.display = (c.style.display === "block") ? "none" : "block";
 };
 
+// --- FUNCIÓN CORREGIDA ---
 function actualizarTop() {
     let hoy = new Date().toLocaleDateString();
     let tHoy = 0, tMes = 0, tPas = 0;
@@ -197,6 +197,7 @@ function actualizarTop() {
     let mesPas = (mesAct === 1) ? 12 : mesAct - 1;
     let añoPas = (mesAct === 1) ? añoAct - 1 : añoAct;
 
+    // 1. Cálculos de dinero
     ventas.forEach(v => {
         if (v.fecha === hoy) tHoy += v.total;
         if (v.mes === mesAct && v.año === añoAct) tMes += v.total;
@@ -206,6 +207,22 @@ function actualizarTop() {
     document.getElementById("reporte-hoy").innerText = "$" + tHoy.toLocaleString();
     document.getElementById("reporte-mes").innerText = "$" + tMes.toLocaleString();
     document.getElementById("reporte-mes-pasado").innerText = "$" + tPas.toLocaleString();
+
+    // 2. Cálculo del Producto Más Vendido (TOP)
+    let maxVendido = 0;
+    let productoTop = "N/A";
+
+    for (let p in contadorProductos) {
+        if (contadorProductos[p] > maxVendido) {
+            maxVendido = contadorProductos[p];
+            productoTop = p;
+        }
+    }
+
+    let pTopElement = document.getElementById("top");
+    if (pTopElement) {
+        pTopElement.innerText = productoTop === "N/A" ? "N/A" : `${productoTop} (${maxVendido})`;
+    }
 }
 
 window.exportarCSV = function() {
@@ -220,9 +237,10 @@ window.exportarCSV = function() {
 
 window.limpiarHistorial = function() {
     if (confirm("¿Borrar todo?")) { 
-        ventas = []; contadorProductos = {}; 
+        ventas = []; contadorProductos = {}; cantidades = {};
         localStorage.setItem("ventas", JSON.stringify(ventas)); 
         localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos)); 
+        localStorage.setItem("cantidades", JSON.stringify(cantidades));
         actualizarTop(); 
     }
 };
