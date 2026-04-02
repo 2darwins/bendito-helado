@@ -42,8 +42,9 @@ function actualizarCarrito() {
     lista.innerHTML = "";
     carrito.forEach((p, index) => {
         let li = document.createElement("li");
-        li.innerHTML = `<span>${p.cantidad} x $${p.precio.toLocaleString()}</span> <span>${p.nombre}</span> <button onclick="eliminarDelCarrito(${index})">x</button>`;
-        lista.appendChild(li);
+        li.innerHTML = `<span>${p.cantidad} x $${p.precio.toLocaleString()}</span> 
+                <span>${p.nombre}</span> 
+                <button onclick="eliminarDelCarrito(${index})" style="color:red; border:none; background:none; font-weight:bold; cursor:pointer;">X</button>`;
     });
     document.getElementById("total").innerText = total.toLocaleString();
     actualizarCambio();
@@ -88,6 +89,8 @@ window.procesarPago = function() {
         detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(" - "),
         total: total,
         metodo: metodoUsado
+document.getElementById("pago").value = "";
+document.getElementById("cambio").innerText = "0";
     };
     
     ventas.push(venta);
@@ -145,20 +148,21 @@ window.toggleConfig = function() {
 // =====================
 
 window.exportarCSV = function() {
-    if (ventas.length === 0) return alert("No hay datos");
+    if (ventas.length === 0) return alert("No hay ventas");
     
-    let csv = "\uFEFF"; // Para que Excel lea bien tildes
-    csv += "FECHA,MES,AÑO,HORA,PRODUCTOS,VALOR TOTAL,METODO PAGO\n";
-    
+    let csv = "\uFEFFFECHA,DIA,MES,AÑO,HORA,PRODUCTOS,TOTAL,METODO\n";
     ventas.forEach(v => {
-        csv += `${v.fecha},${v.mes},${v.año},${v.hora},"${v.detalle}",${v.total},${v.metodo}\n`;
+        csv += `${v.fecha},${v.dia || ''},${v.mes || ''},${v.año || ''},${v.hora},"${v.detalle}",${v.total},${v.metodo || 'Efectivo'}\n`;
     });
 
     let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    let url = URL.createObjectURL(blob);
     let link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "Reporte_Ventas_Bendito_Helado.csv";
+    link.href = url;
+    link.setAttribute("download", "Reporte_Ventas.csv");
+    document.body.appendChild(link); // Lo añadimos al cuerpo para que el cel lo vea
     link.click();
+    document.body.removeChild(link); // Lo borramos después de usarlo
 };
 
 function actualizarTop() {
