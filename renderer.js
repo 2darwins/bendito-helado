@@ -3,6 +3,9 @@ let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
 let clientes = JSON.parse(localStorage.getItem("clientes")) || {};
 let contadorProductos = JSON.parse(localStorage.getItem("contadorProductos")) || {};
 let cantidades = JSON.parse(localStorage.getItem("cantidades")) || {};
+// NUEVA VARIABLE PARA RECIBOS CONSECUTIVOS
+let proximoRecibo = JSON.parse(localStorage.getItem("proximoRecibo")) || 1; 
+
 let carrito = [];
 let total = 0;
 
@@ -75,7 +78,6 @@ window.pagoRapido = function(metodo) {
     actualizarCambio();
 };
 
-// --- GESTIÓN DE CLIENTES ---
 window.buscarCliente = function() {
     let ced = document.getElementById("cliente-cedula").value;
     let extra = document.getElementById("datos-cliente-extra");
@@ -98,10 +100,8 @@ window.registrarCliente = function() {
     alert("Cliente registrado ✅");
 };
 
-// --- FACTURA PRO ---
 function enviarFacturaEmail(venta, cliente, itemsCarrito) {
     let detalleTxt = itemsCarrito.map(p => `${p.nombre}\n${p.cantidad}x$${p.precio.toLocaleString()} $${(p.cantidad * p.precio).toLocaleString()}`).join("\n\n");
-    
     let asunto = encodeURIComponent(`Recibo Bendito Helado - ${venta.recibo}`);
     let cuerpo = encodeURIComponent(`"Mira Helado positivo a las cosas" 🤙
 
@@ -121,7 +121,6 @@ Total
 $${venta.total.toLocaleString()}
 
 Gracias por su compra! 🤗`);
-
     window.location.href = `mailto:${cliente.correo}?subject=${asunto}&body=${cuerpo}`;
 }
 
@@ -131,16 +130,26 @@ window.procesarPago = function() {
     if (pagoVal < total) return alert("Pago insuficiente");
 
     let ahora = new Date();
-    let numRecibo = "VNBI-" + Math.floor(Math.random() * 999);
+    // CAMBIO A FORMATO BH-01, BH-02...
+    let numRecibo = "BH-" + String(proximoRecibo).padStart(2, '0');
+    
     let venta = {
         fecha: ahora.toLocaleDateString(),
-        mes: ahora.getMonth() + 1, año: ahora.getFullYear(),
+        año: ahora.getFullYear(), // Agregado para el Excel
+        mes: ahora.getMonth() + 1,
         hora: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
         detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", "),
-        total: total, recibo: numRecibo, metodo: document.getElementById("pago").dataset.metodo || "Efectivo"
+        total: total, 
+        recibo: numRecibo, 
+        metodo: document.getElementById("pago").dataset.metodo || "Efectivo"
     };
 
     ventas.push(venta);
+    
+    // Incrementar y guardar contador de recibos
+    proximoRecibo++;
+    localStorage.setItem("proximoRecibo", JSON.stringify(proximoRecibo));
+
     carrito.forEach(p => { 
         contadorProductos[p.nombre] = (contadorProductos[p.nombre] || 0) + p.cantidad;
         cantidades[p.nombre] = (cantidades[p.nombre] || 0) + p.cantidad;
@@ -189,7 +198,6 @@ window.toggleConfig = function() {
     c.style.display = (c.style.display === "block") ? "none" : "block";
 };
 
-// --- FUNCIÓN CORREGIDA ---
 function actualizarTop() {
     let hoy = new Date().toLocaleDateString();
     let tHoy = 0, tMes = 0, tPas = 0;
@@ -197,7 +205,6 @@ function actualizarTop() {
     let mesPas = (mesAct === 1) ? 12 : mesAct - 1;
     let añoPas = (mesAct === 1) ? añoAct - 1 : añoAct;
 
-    // 1. Cálculos de dinero
     ventas.forEach(v => {
         if (v.fecha === hoy) tHoy += v.total;
         if (v.mes === mesAct && v.año === añoAct) tMes += v.total;
@@ -208,7 +215,6 @@ function actualizarTop() {
     document.getElementById("reporte-mes").innerText = "$" + tMes.toLocaleString();
     document.getElementById("reporte-mes-pasado").innerText = "$" + tPas.toLocaleString();
 
-    // 2. Cálculo del Producto Más Vendido (TOP)
     let maxVendido = 0;
     let productoTop = "N/A";
 
@@ -225,22 +231,44 @@ function actualizarTop() {
     }
 }
 
+// --- FUNCIÓN EXPORTAR MEJORADA (DESGLOSADA POR PRODUCTO) ---
 window.exportarCSV = function() {
-    let csv = "\uFEFFFECHA,RECIBO,DETALLE,TOTAL\n";
-    ventas.forEach(v => { csv += `${v.fecha},${v.recibo},"${v.detalle}",${v.total}\n`; });
-    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    let contenido = "AÑO\tFECHA\tMES\tHORA\tRECIBO\tDETALLE\tCANTIDAD\tVALOR UNIT.\tVALOR TOTAL\tMEDIO DE PAGO\n";
+    const meses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+    ventas.forEach(v => {
+        let mesNombre = meses[v.mes];
+        // Desglosamos el detalle: "2 Cono, 1 Vaso" -> ["2 Cono", "1 Vaso"]
+        let items = v.detalle.split(", ");
+        
+        items.forEach(item => {
+            let espacioIdx = item.indexOf(" ");
+            let cant = parseInt(item.substring(0, espacioIdx)) || 1;
+            let nombreProd = item.substring(espacioIdx + 1);
+            
+            // Buscar precio unitario en lista de productos para exactitud
+            let pOriginal = productos.find(p => p.nombre === nombreProd);
+            let precioU = pOriginal ? pOriginal.precio : (v.total / cant);
+            let subtotal = precioU * cant;
+
+            contenido += `${v.año}\t${v.fecha}\t${mesNombre}\t${v.hora}\t${v.recibo}\t${nombreProd}\t${cant}\t${precioU}\t${subtotal}\t${v.metodo}\n`;
+        });
+    });
+
+    let blob = new Blob(["\ufeff" + contenido], { type: 'application/vnd.ms-excel;charset=utf-8' });
     let link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "Ventas_Bendito.csv";
+    link.download = "Ventas_Detalladas_BH.xls";
     link.click();
 };
 
 window.limpiarHistorial = function() {
     if (confirm("¿Borrar todo?")) { 
-        ventas = []; contadorProductos = {}; cantidades = {};
+        ventas = []; contadorProductos = {}; cantidades = {}; proximoRecibo = 1;
         localStorage.setItem("ventas", JSON.stringify(ventas)); 
         localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos)); 
         localStorage.setItem("cantidades", JSON.stringify(cantidades));
+        localStorage.setItem("proximoRecibo", JSON.stringify(proximoRecibo));
         actualizarTop(); 
     }
 };
