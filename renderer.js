@@ -231,14 +231,14 @@ function actualizarTop() {
     }
 }
 
-// --- FUNCIÓN EXPORTAR MEJORADA (DESGLOSADA POR PRODUCTO) ---
+// --- FUNCIÓN EXPORTAR CORREGIDA PARA EXCEL EN ESPAÑOL (SOLUCIÓN FINAL) ---
 window.exportarCSV = function() {
-    let contenido = "AÑO\tFECHA\tMES\tHORA\tRECIBO\tDETALLE\tCANTIDAD\tVALOR UNIT.\tVALOR TOTAL\tMEDIO DE PAGO\n";
+    // Usamos PUNTO Y COMA (;) para que tu Excel separe las columnas automáticamente
+    let contenido = "AÑO;FECHA;MES;HORA;RECIBO;DETALLE;CANTIDAD;VALOR UNIT.;VALOR TOTAL;MEDIO DE PAGO\n";
     const meses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
     ventas.forEach(v => {
-        let mesNombre = meses[v.mes];
-        // Desglosamos el detalle: "2 Cono, 1 Vaso" -> ["2 Cono", "1 Vaso"]
+        let mesNombre = meses[v.mes] || "N/A";
         let items = v.detalle.split(", ");
         
         items.forEach(item => {
@@ -246,19 +246,23 @@ window.exportarCSV = function() {
             let cant = parseInt(item.substring(0, espacioIdx)) || 1;
             let nombreProd = item.substring(espacioIdx + 1);
             
-            // Buscar precio unitario en lista de productos para exactitud
             let pOriginal = productos.find(p => p.nombre === nombreProd);
             let precioU = pOriginal ? pOriginal.precio : (v.total / cant);
             let subtotal = precioU * cant;
 
-            contenido += `${v.año}\t${v.fecha}\t${mesNombre}\t${v.hora}\t${v.recibo}\t${nombreProd}\t${cant}\t${precioU}\t${subtotal}\t${v.metodo}\n`;
+            // Fila separada por PUNTO Y COMA
+            contenido += `${v.año || ''};${v.fecha};${mesNombre};${v.hora};${v.recibo};${nombreProd};${cant};${precioU};${subtotal};${v.metodo}\n`;
         });
     });
 
-    let blob = new Blob(["\ufeff" + contenido], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    // Usamos el formato CSV con BOM (\uFEFF) para que Excel reconozca tildes y símbolos
+    let blob = new Blob(["\uFEFF" + contenido], { type: 'text/csv;charset=utf-8;' });
     let link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "Ventas_Detalladas_BH.xls";
+    
+    let hoy = new Date().toLocaleDateString().replace(/\//g, "-");
+    link.download = `Ventas_Bendito_${hoy}.csv`; 
+    
     link.click();
 };
 
