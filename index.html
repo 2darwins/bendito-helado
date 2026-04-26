@@ -78,9 +78,17 @@
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
         <div class="stat-card" style="background: #e3f2fd; border-color: #2196f3;"><small>Hoy</small><div id="reporte-hoy" style="font-weight:bold;">$0</div></div>
+        <div class="stat-card" style="background: #fff9c4; border-color: #fbc02d;"><small>Ayer</small><div id="reporte-ayer" style="font-weight:bold;">$0</div></div>
         <div class="stat-card" style="background: #f1f8e9; border-color: #4caf50;"><small>Mes</small><div id="reporte-mes" style="font-weight:bold;">$0</div></div>
         <div class="stat-card" style="background: #fff3e0; border-color: #ff9800;"><small>Mes Pasado</small><div id="reporte-mes-pasado" style="font-weight:bold;">$0</div></div>
-        <div class="stat-card" style="background: #f3e5f5; border-color: #9c27b0;"><small>Top</small><div id="top" style="font-weight:bold; font-size:0.8em;">N/A</div></div>
+        <div class="stat-card" style="background: #f3e5f5; border-color: #9c27b0; grid-column: span 1;"><small>🏆 Top 1</small><div id="top" style="font-weight:bold; font-size:0.8em;">N/A</div></div>
+        <div class="stat-card" style="background: #ede7f6; border-color: #673ab7; grid-column: span 1;"><small>🥈 Top 2</small><div id="top2" style="font-weight:bold; font-size:0.8em;">N/A</div></div>
+    </div>
+
+    <div style="background: #e0f2f1; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #4db6ac;">
+        <h4 style="margin-top: 0; color: #00695c;">📊 STOCK DE CAJAS (PORCIONES)</h4>
+        <div id="lista-inventario" style="margin-bottom: 10px;"></div>
+        <small style="color: #555;">* Registra tus 2 cajas nuevas aquí.</small>
     </div>
 
     <div style="background: #eee; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
@@ -92,16 +100,299 @@
     </div>
 
     <div style="background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px;">
-        <h4 style="margin-top:0; border-bottom: 2px solid #ff5252; padding-bottom: 5px;">ELIMINAR DEL MENÚ</h4>
-        <div id="lista-eliminar" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div>
+        <h4 style="margin-top:0; border-bottom: 2px solid #ff5252; padding-bottom: 5px;">ELIMINAR DEL MENÚ / STOCK</h4>
+        <div id="lista-eliminar" style="display: grid; grid-template-columns: 1fr; gap: 8px;"></div>
     </div>
 
     <div style="display: flex; gap: 10px;">
         <button onclick="exportarCSV()" style="flex: 1; background: #2e7d32; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold;">EXCEL</button>
-        <button onclick="limpiarHistorial()" style="flex: 1; background: #c62828; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold;">BORRAR VENTAS</button>
+        <button onclick="limpiarHistorial()" style="flex: 1; background: #c62828; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold;">BORRAR TODO</button>
     </div>
 </div>
 
-<script src="renderer.js"></script>
+<script>
+let productos = JSON.parse(localStorage.getItem("productos")) || [];
+let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+let clientes = JSON.parse(localStorage.getItem("clientes")) || {};
+let contadorProductos = JSON.parse(localStorage.getItem("contadorProductos")) || {};
+let inventario = JSON.parse(localStorage.getItem("inventario")) || {};
+let proximoRecibo = JSON.parse(localStorage.getItem("proximoRecibo")) || 1; 
+
+let carrito = [];
+let total = 0;
+
+window.onload = function() {
+    mostrarProductos();
+    actualizarTop();
+    actualizarVistaInventario();
+};
+
+function mostrarProductos() {
+    let contenedor = document.getElementById("productos");
+    let listaEliminar = document.getElementById("lista-eliminar");
+    if (!contenedor) return;
+    contenedor.innerHTML = "";
+    if (listaEliminar) listaEliminar.innerHTML = "";
+
+    productos.forEach((p, index) => {
+        let div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `<strong>${p.nombre}</strong><img src="${p.imagen}"><span>$${p.precio.toLocaleString()}</span>`;
+        div.onclick = () => agregarAlCarrito(index);
+        contenedor.appendChild(div);
+
+        if (listaEliminar) {
+            let item = document.createElement("div");
+            item.style = "display: flex; align-items: center; background: #f9f9f9; padding: 8px; border-radius: 5px; border: 1px solid #eee; gap: 5px;";
+            item.innerHTML = `<span style="flex: 1; font-size: 0.8em; font-weight:bold;">${p.nombre}</span>
+                              <button onclick="eliminarProductoMenu(${index})" style="background:#ff5252; color:white; border:none; border-radius:3px; padding: 5px 10px;">🗑️</button>
+                              <button onclick="eliminarCajaSoloStock('${p.nombre}')" style="background:#777; color:white; border:none; border-radius:3px; padding: 5px 10px;">📦🗑️</button>`;
+            listaEliminar.appendChild(item);
+        }
+    });
+}
+
+function agregarAlCarrito(index) {
+    let p = productos[index];
+    let item = carrito.find(i => i.nombre === p.nombre);
+    if (item) { item.cantidad++; } 
+    else { carrito.push({ ...p, cantidad: 1 }); }
+    total += p.precio;
+    actualizarCarrito();
+}
+
+function actualizarCarrito() {
+    let lista = document.getElementById("carrito");
+    lista.innerHTML = "";
+    carrito.forEach((p, index) => {
+        let li = document.createElement("li");
+        li.innerHTML = `<span>${p.cantidad} x $${p.precio.toLocaleString()}</span> <span>${p.nombre}</span> <button onclick="eliminarDelCarrito(${index})" style="color:red; border:none; background:none; font-weight:bold;">X</button>`;
+        lista.appendChild(li);
+    });
+    document.getElementById("total").innerText = total.toLocaleString();
+}
+
+window.eliminarDelCarrito = function(index) {
+    total -= carrito[index].precio;
+    if (carrito[index].cantidad > 1) { carrito[index].cantidad--; } 
+    else { carrito.splice(index, 1); }
+    actualizarCarrito();
+}
+
+window.actualizarCambio = function() {
+    let pago = parseFloat(document.getElementById("pago").value) || 0;
+    let cambio = pago >= total ? pago - total : 0;
+    document.getElementById("cambio").innerText = cambio.toLocaleString();
+};
+
+window.pagoRapido = function(metodo) {
+    let input = document.getElementById("pago");
+    input.dataset.metodo = metodo; 
+    input.value = (metodo === 'Efectivo') ? "" : total;
+    actualizarCambio();
+};
+
+window.procesarPago = function() {
+    if (total === 0) return;
+    let pagoVal = parseFloat(document.getElementById("pago").value) || 0;
+    if (pagoVal < total) return alert("Pago insuficiente");
+
+    let ahora = new Date();
+    let numRecibo = "BH-" + String(proximoRecibo).padStart(2, '0');
+    
+    let venta = {
+        fecha: ahora.toLocaleDateString(),
+        año: ahora.getFullYear(),
+        mes: ahora.getMonth() + 1,
+        dia: ahora.getDate(),
+        hora: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+        detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", "),
+        total: total, 
+        recibo: numRecibo, 
+        metodo: document.getElementById("pago").dataset.metodo || "Efectivo"
+    };
+
+    ventas.push(venta);
+    proximoRecibo++;
+    localStorage.setItem("proximoRecibo", JSON.stringify(proximoRecibo));
+
+    // DESCUENTO DINÁMICO DE STOCK
+    carrito.forEach(p => { 
+        contadorProductos[p.nombre] = (contadorProductos[p.nombre] || 0) + p.cantidad;
+        for (let sabor in inventario) {
+            if (p.nombre.toLowerCase().includes(sabor.toLowerCase())) {
+                if (inventario[sabor] > 0) {
+                    inventario[sabor] -= p.cantidad; 
+                    if (inventario[sabor] < 15 && inventario[sabor] > 0) {
+                        alert(`¡PILAS! Solo quedan ${inventario[sabor]} porciones de ${sabor}`);
+                    }
+                }
+            }
+        }
+    });
+
+    localStorage.setItem("ventas", JSON.stringify(ventas));
+    localStorage.setItem("inventario", JSON.stringify(inventario));
+    localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
+
+    alert("Venta Exitosa ✅");
+    carrito = []; total = 0;
+    document.getElementById("pago").value = "";
+    actualizarCarrito();
+    actualizarTop();
+    actualizarVistaInventario();
+};
+
+window.agregarProducto = function() {
+    let nom = document.getElementById("nombre").value;
+    let pre = parseFloat(document.getElementById("precio").value);
+    let img = document.getElementById("imagen").files[0];
+    if (!nom || !pre || !img) return alert("Faltan datos");
+    let reader = new FileReader();
+    reader.onload = (e) => {
+        productos.push({ nombre: nom, precio: pre, imagen: e.target.result });
+        localStorage.setItem("productos", JSON.stringify(productos));
+        
+        // Al crear producto, no creamos stock automáticamente para que tú decidas cuándo cargar la caja de 100
+        mostrarProductos();
+        document.getElementById("nombre").value = "";
+        document.getElementById("precio").value = "";
+        alert("Producto creado. ¡Carga su stock en el módulo de abajo cuando tengas la caja!");
+    };
+    reader.readAsDataURL(img);
+};
+
+window.eliminarProductoMenu = function(i) {
+    if(confirm("¿Eliminar del menú?")) { productos.splice(i, 1); localStorage.setItem("productos", JSON.stringify(productos)); mostrarProductos(); }
+};
+
+window.eliminarCajaSoloStock = function(sabor) {
+    if(confirm(`¿Borrar el control de inventario de ${sabor}?`)) {
+        delete inventario[sabor];
+        localStorage.setItem("inventario", JSON.stringify(inventario));
+        actualizarVistaInventario();
+    }
+}
+
+window.comprarCaja = function(sabor) {
+    let cantidad = prompt(`¿Cuántas porciones vas a agregar a ${sabor}? (Caja completa = 100)`, "100");
+    if (cantidad === null) return;
+    inventario[sabor] = (inventario[sabor] || 0) + parseInt(cantidad);
+    localStorage.setItem("inventario", JSON.stringify(inventario));
+    actualizarVistaInventario();
+};
+
+function actualizarVistaInventario() {
+    let divInv = document.getElementById("lista-inventario");
+    if (!divInv) return;
+    divInv.innerHTML = "";
+    
+    // Mostramos los sabores que tienen stock registrado
+    let hayStock = false;
+    for (let sabor in inventario) {
+        hayStock = true;
+        let cant = inventario[sabor];
+        let color = cant < 15 ? "red" : "black";
+        divInv.innerHTML += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #ccc; padding:8px; font-size:0.9em; background:white; margin-bottom:2px;">
+            <span style="color:${color}"><b>${sabor}</b>: ${cant} porc.</span>
+            <button onclick="comprarCaja('${sabor}')" style="background:#009688; color:white; border:none; border-radius:3px; padding:2px 8px;">+ Carga</button>
+        </div>`;
+    }
+
+    // Botón para iniciar control de un sabor nuevo (tus 2 cajas de hoy)
+    divInv.innerHTML += `<button onclick="iniciarNuevoStock()" style="width:100%; margin-top:10px; padding:8px; background:#333; color:white; border:none; border-radius:5px; font-size:0.8em;">+ CONTROLAR OTRO SABOR</button>`;
+}
+
+window.iniciarNuevoStock = function() {
+    let sabor = prompt("Escribe el nombre del sabor que quieres empezar a controlar (Ej: Vainilla)");
+    if (sabor) {
+        inventario[sabor] = 0;
+        comprarCaja(sabor);
+    }
+}
+
+function actualizarTop() {
+    let hoy = new Date();
+    let hoyStr = hoy.toLocaleDateString();
+    let ayer = new Date(); ayer.setDate(hoy.getDate() - 1);
+    let ayerStr = ayer.toLocaleDateString();
+
+    let tHoy = 0, tAyer = 0, tMes = 0, tPas = 0;
+    let mesAct = hoy.getMonth() + 1, añoAct = hoy.getFullYear();
+    let mesPas = (mesAct === 1) ? 12 : mesAct - 1;
+    let añoPas = (mesAct === 1) ? añoAct - 1 : añoAct;
+
+    ventas.forEach(v => {
+        if (v.fecha === hoyStr) tHoy += v.total;
+        if (v.fecha === ayerStr) tAyer += v.total;
+        if (v.mes === mesAct && v.año === añoAct) tMes += v.total;
+        if (v.mes === mesPas && v.año === añoPas) tPas += v.total;
+    });
+
+    document.getElementById("reporte-hoy").innerText = "$" + tHoy.toLocaleString();
+    document.getElementById("reporte-ayer").innerText = "$" + tAyer.toLocaleString();
+    document.getElementById("reporte-mes").innerText = "$" + tMes.toLocaleString();
+    document.getElementById("reporte-mes-pasado").innerText = "$" + tPas.toLocaleString();
+
+    let ordenados = Object.entries(contadorProductos).sort((a, b) => b[1] - a[1]);
+    document.getElementById("top").innerText = ordenados[0] ? `${ordenados[0][0]} (${ordenados[0][1]})` : "N/A";
+    document.getElementById("top2").innerText = ordenados[1] ? `${ordenados[1][0]} (${ordenados[1][1]})` : "N/A";
+}
+
+window.toggleConfig = function() {
+    let c = document.getElementById("config");
+    c.style.display = (c.style.display === "block") ? "none" : "block";
+};
+
+window.exportarCSV = function() {
+    let csv = "AÑO;FECHA;MES;HORA;RECIBO;DETALLE;CANTIDAD;VALOR UNIT;VALOR TOTAL;MEDIO DE PAGO\n";
+    ventas.forEach(v => {
+        let items = v.detalle.split(", ");
+        items.forEach(item => {
+            let espacioIdx = item.indexOf(" ");
+            let cant = parseInt(item.substring(0, espacioIdx)) || 1;
+            let nombreProd = item.substring(espacioIdx + 1);
+            let pOriginal = productos.find(p => p.nombre === nombreProd);
+            let precioU = pOriginal ? pOriginal.precio : (v.total / cant);
+            csv += `${v.año};${v.fecha};${v.mes};${v.hora};${v.recibo};${nombreProd};${cant};${precioU};${cant * precioU};${v.metodo}\n`;
+        });
+    });
+    let blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "Ventas_Bendito_Helado.csv";
+    link.click();
+};
+
+window.limpiarHistorial = function() {
+    if (confirm("¿Borrar todo el historial y stock?")) {
+        ventas = []; contadorProductos = {}; inventario = {}; proximoRecibo = 1;
+        localStorage.clear();
+        location.reload();
+    }
+};
+
+window.buscarCliente = function() {
+    let ced = document.getElementById("cliente-cedula").value;
+    let extra = document.getElementById("datos-cliente-extra");
+    if (clientes[ced]) {
+        document.getElementById("cliente-nombre").value = clientes[ced].nombre;
+        document.getElementById("cliente-correo").value = clientes[ced].correo;
+        extra.style.display = "flex";
+    } else {
+        extra.style.display = (ced.length > 3) ? "flex" : "none";
+    }
+};
+
+window.registrarCliente = function() {
+    let ced = document.getElementById("cliente-cedula").value;
+    let nom = document.getElementById("cliente-nombre").value;
+    let cor = document.getElementById("cliente-correo").value;
+    if (!ced || !nom || !cor) return alert("Faltan datos");
+    clientes[ced] = { nombre: nom, correo: cor };
+    localStorage.setItem("clientes", JSON.stringify(clientes));
+    alert("Cliente registrado ✅");
+};
+</script>
 </body>
 </html>
