@@ -104,6 +104,12 @@
         <div id="lista-eliminar" style="display: grid; grid-template-columns: 1fr; gap: 8px;"></div>
     </div>
 
+    <div style="background: #fff5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffcdd2;">
+        <h4 style="margin-top: 0; color: #c62828;">❌ HISTORIAL Y ANULACIONES</h4>
+        <button onclick="mostrarHistorialVentas()" style="width: 100%; padding: 8px; background: #576574; color: white; border: none; border-radius: 5px; font-size: 0.8em; margin-bottom: 10px;">REVISAR ÚLTIMAS VENTAS</button>
+        <div id="historial-ventas-lista" style="max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
     <div style="display: flex; gap: 10px;">
         <button onclick="exportarCSV()" style="flex: 1; background: #2e7d32; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold;">EXCEL</button>
         <button onclick="limpiarHistorial()" style="flex: 1; background: #c62828; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold;">BORRAR TODO</button>
@@ -111,6 +117,9 @@
 </div>
 
 <script>
+// CLAVE MAESTRA
+const CLAVE_ADMIN = "1234";
+
 let productos = JSON.parse(localStorage.getItem("productos")) || [];
 let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
 let clientes = JSON.parse(localStorage.getItem("clientes")) || {};
@@ -243,6 +252,56 @@ window.procesarPago = function() {
     actualizarVistaInventario();
 };
 
+// NUEVA FUNCIÓN: MOSTRAR VENTAS PARA ANULAR
+window.mostrarHistorialVentas = function() {
+    let lista = document.getElementById("historial-ventas-lista");
+    lista.innerHTML = "";
+    [...ventas].reverse().slice(0, 10).forEach((v, indexRev) => {
+        let indexOriginal = ventas.length - 1 - indexRev;
+        let div = document.createElement("div");
+        div.style = "background:white; padding:8px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; font-size:0.75em;";
+        div.innerHTML = `<div><b>${v.recibo}</b> - $${v.total.toLocaleString()}<br><small>${v.detalle}</small></div>
+                         <button onclick="anularVenta(${indexOriginal})" style="background:red; color:white; border:none; padding:5px; border-radius:3px;">BORRAR</button>`;
+        lista.appendChild(div);
+    });
+};
+
+// NUEVA FUNCIÓN: ANULAR CON CLAVE Y DEVOLVER STOCK
+window.anularVenta = function(index) {
+    let pass = prompt("ADMIN: Ingresa la clave para anular:");
+    if (pass !== CLAVE_ADMIN) return alert("Clave incorrecta");
+
+    if (confirm("¿Seguro? El dinero se restará y el helado volverá al stock.")) {
+        let v = ventas[index];
+        // Devolver stock
+        let items = v.detalle.split(", ");
+        items.forEach(item => {
+            let partes = item.split(" ");
+            let cant = parseInt(partes[0]);
+            let nombreProd = item.substring(item.indexOf(" ") + 1);
+            
+            // Buscar sabor para devolver a la caja
+            for (let sabor in inventario) {
+                if (nombreProd.toLowerCase().includes(sabor.toLowerCase())) {
+                    inventario[sabor] += cant;
+                }
+            }
+            // Restar del contador de más vendidos
+            if (contadorProductos[nombreProd]) contadorProductos[nombreProd] -= cant;
+        });
+
+        ventas.splice(index, 1);
+        localStorage.setItem("ventas", JSON.stringify(ventas));
+        localStorage.setItem("inventario", JSON.stringify(inventario));
+        localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
+        
+        alert("Venta anulada con éxito ✅");
+        mostrarHistorialVentas();
+        actualizarTop();
+        actualizarVistaInventario();
+    }
+};
+
 window.agregarProducto = function() {
     let nom = document.getElementById("nombre").value;
     let pre = parseFloat(document.getElementById("precio").value);
@@ -252,8 +311,6 @@ window.agregarProducto = function() {
     reader.onload = (e) => {
         productos.push({ nombre: nom, precio: pre, imagen: e.target.result });
         localStorage.setItem("productos", JSON.stringify(productos));
-        
-        // Al crear producto, no creamos stock automáticamente para que tú decidas cuándo cargar la caja de 100
         mostrarProductos();
         document.getElementById("nombre").value = "";
         document.getElementById("precio").value = "";
@@ -286,11 +343,7 @@ function actualizarVistaInventario() {
     let divInv = document.getElementById("lista-inventario");
     if (!divInv) return;
     divInv.innerHTML = "";
-    
-    // Mostramos los sabores que tienen stock registrado
-    let hayStock = false;
     for (let sabor in inventario) {
-        hayStock = true;
         let cant = inventario[sabor];
         let color = cant < 15 ? "red" : "black";
         divInv.innerHTML += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #ccc; padding:8px; font-size:0.9em; background:white; margin-bottom:2px;">
@@ -298,8 +351,6 @@ function actualizarVistaInventario() {
             <button onclick="comprarCaja('${sabor}')" style="background:#009688; color:white; border:none; border-radius:3px; padding:2px 8px;">+ Carga</button>
         </div>`;
     }
-
-    // Botón para iniciar control de un sabor nuevo (tus 2 cajas de hoy)
     divInv.innerHTML += `<button onclick="iniciarNuevoStock()" style="width:100%; margin-top:10px; padding:8px; background:#333; color:white; border:none; border-radius:5px; font-size:0.8em;">+ CONTROLAR OTRO SABOR</button>`;
 }
 
