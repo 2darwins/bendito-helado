@@ -358,3 +358,55 @@ window.limpiarHistorial = function() {
         location.reload();
     }
 };
+
+// --- NUEVA FUNCIÓN: SEGURIDAD PARA ANULAR VENTAS (ACCESO CON CLAVE) ---
+const CLAVE_ADMIN = "1234"; // CAMBIA TU CLAVE AQUÍ
+
+window.mostrarHistorialVentas = function() {
+    let contenedor = document.getElementById("historial-ventas-lista");
+    if (!contenedor) return;
+    contenedor.innerHTML = "";
+    [...ventas].reverse().forEach((v, indexRev) => {
+        let indexOriginal = ventas.length - 1 - indexRev;
+        let div = document.createElement("div");
+        div.style = "background:#fff; padding:10px; margin-bottom:8px; border-radius:8px; border-left:4px solid #f44336; font-size:0.8em; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 4px rgba(0,0,0,0.05);";
+        div.innerHTML = `<div><b>${v.recibo}</b> - ${v.hora}<br>${v.detalle}<br><b style="color:#e91e63;">$${v.total.toLocaleString()}</b></div>
+                         <button onclick="anularVenta(${indexOriginal})" style="background:#f44336; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer; font-weight:bold;">ANULAR</button>`;
+        contenedor.appendChild(div);
+    });
+};
+
+window.anularVenta = function(index) {
+    let password = prompt("ADMIN: Ingresa la clave para borrar esta venta:");
+    if (password === null) return;
+    if (password !== CLAVE_ADMIN) return alert("❌ Clave incorrecta");
+
+    if (confirm("¿Anular venta? El stock se devolverá a las cajas.")) {
+        let v = ventas[index];
+        // DEVOLVER STOCK
+        let items = v.detalle.split(", ");
+        items.forEach(item => {
+            let cant = parseInt(item.split(" ")[0]);
+            let matchSabor = item.match(/\(([^)]+)\)/);
+            if (matchSabor) {
+                let sabor = matchSabor[1];
+                if (inventario[sabor] !== undefined) inventario[sabor] += cant;
+            }
+            // Restar de contadores
+            let nombreProd = item.substring(item.indexOf(" ") + 1);
+            if (contadorProductos[nombreProd]) contadorProductos[nombreProd] -= cant;
+            if (cantidades[nombreProd]) cantidades[nombreProd] -= cant;
+        });
+
+        ventas.splice(index, 1);
+        localStorage.setItem("ventas", JSON.stringify(ventas));
+        localStorage.setItem("inventario", JSON.stringify(inventario));
+        localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
+        localStorage.setItem("cantidades", JSON.stringify(cantidades));
+
+        alert("Venta eliminada ✅");
+        mostrarHistorialVentas();
+        actualizarTop();
+        actualizarVistaInventario();
+    }
+};
