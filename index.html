@@ -25,7 +25,6 @@
     .config-btn { text-align: center; padding: 8px; background: #eee; font-size: 0.8em; cursor: pointer; }
     #config { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding:20px; overflow-y:auto; box-sizing:border-box; }
     .stat-card { padding: 10px; border-radius: 8px; border-left: 5px solid; }
-    .badge-frecuente { background: gold; color: black; font-size: 0.7em; padding: 2px 5px; border-radius: 10px; font-weight: bold; margin-left: 5px; }
   </style>
 </head>
 <body>
@@ -47,7 +46,6 @@
       <input type="number" id="cliente-cedula" placeholder="Cédula (Cliente Frecuente)" oninput="buscarCliente()" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
       <button onclick="registrarCliente()" style="background: #0288d1; color: white; border: none; border-radius: 4px; padding: 0 10px;">💾</button>
     </div>
-    <div id="info-puntos" style="font-size: 0.75em; color: #01579b; font-weight: bold;"></div>
     <div id="datos-cliente-extra" style="display: none; display: flex; gap: 5px;">
       <input type="text" id="cliente-nombre" placeholder="Nombre" style="flex: 1; padding: 5px; font-size: 0.8em;">
       <input type="email" id="cliente-correo" placeholder="Correo" style="flex: 1; padding: 5px; font-size: 0.8em;">
@@ -78,6 +76,14 @@
         <button onclick="toggleConfig()" style="background: #333; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">X</button>
     </div>
 
+    <div style="background: #f1f8e9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #8bc34a;">
+        <label style="font-weight: bold; color: #33691e; display: block; margin-bottom: 5px;">💰 BASE DE INICIO (Vueltas):</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="number" id="base-diaria" placeholder="Ej: 15000" style="flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-weight: bold;">
+            <button onclick="guardarBase()" style="background: #4caf50; color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold;">FIJAR BASE</button>
+        </div>
+    </div>
+
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
         <div class="stat-card" style="background: #e3f2fd; border-color: #2196f3;"><small>Hoy</small><div id="reporte-hoy" style="font-weight:bold;">$0</div></div>
         <div class="stat-card" style="background: #fff9c4; border-color: #fbc02d;"><small>Ayer</small><div id="reporte-ayer" style="font-weight:bold;">$0</div></div>
@@ -88,22 +94,21 @@
     </div>
 
     <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffb74d;">
-        <h4 style="margin-top: 0; color: #e65100;">💸 REGISTRAR GASTO</h4>
-        <input type="text" id="gasto-desc" placeholder="Descripción (Ej: Barquillos)" style="width: 100%; padding: 8px; margin-bottom: 8px;">
-        <input type="number" id="gasto-valor" placeholder="Valor $" style="width: 100%; padding: 8px; margin-bottom: 8px;">
+        <h4 style="margin-top: 0; color: #e65100;">💸 REGISTRAR GASTO (Insumos)</h4>
+        <input type="text" id="gasto-desc" placeholder="¿Qué compraste? (Ej: Servilletas)" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
+        <input type="number" id="gasto-valor" placeholder="Valor $" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
         <button onclick="registrarGasto()" style="width: 100%; padding: 10px; background: #ff9800; color: white; border: none; border-radius: 5px; font-weight: bold;">GUARDAR GASTO</button>
     </div>
 
     <div style="background: #e0f2f1; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #4db6ac;">
         <h4 style="margin-top: 0; color: #00695c;">📊 STOCK DE CAJAS (PORCIONES)</h4>
         <div id="lista-inventario" style="margin-bottom: 10px;"></div>
-        <small style="color: #555;">* Registra tus cajas nuevas aquí.</small>
     </div>
 
     <div style="background: #eee; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
         <h4 style="margin-top: 0;">+ AGREGAR PRODUCTO</h4>
-        <input type="text" id="nombre" placeholder="Nombre" style="width: 100%; padding: 8px; margin-bottom: 8px;">
-        <input type="number" id="precio" placeholder="Precio" style="width: 100%; padding: 8px; margin-bottom: 8px;">
+        <input type="text" id="nombre" placeholder="Nombre" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
+        <input type="number" id="precio" placeholder="Precio" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
         <input type="file" id="imagen" style="margin-bottom: 10px; width: 100%;">
         <button onclick="agregarProducto()" style="width: 100%; padding: 10px; background: #e91e63; color: white; border: none; border-radius: 5px; font-weight: bold;">GUARDAR</button>
     </div>
@@ -115,8 +120,8 @@
 
     <div style="background: #fff5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffcdd2;">
         <h4 style="margin-top: 0; color: #c62828;">❌ CIERRE Y ANULACIONES</h4>
-        <button onclick="mostrarHistorialVentas()" style="width: 100%; padding: 8px; background: #576574; color: white; border: none; border-radius: 5px; font-size: 0.8em; margin-bottom: 10px;">REVISAR ÚLTIMAS VENTAS Y CIERRE</button>
-        <div id="historial-ventas-lista" style="max-height: 200px; overflow-y: auto;"></div>
+        <button onclick="mostrarHistorialVentas()" style="width: 100%; padding: 8px; background: #576574; color: white; border: none; border-radius: 5px; font-size: 0.8em; margin-bottom: 10px;">REVISAR CUADRE Y VENTAS</button>
+        <div id="historial-ventas-lista" style="max-height: 250px; overflow-y: auto;"></div>
     </div>
 
     <div style="display: flex; gap: 10px;">
@@ -130,19 +135,27 @@ const CLAVE_ADMIN = "1234";
 
 let productos = JSON.parse(localStorage.getItem("productos")) || [];
 let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
-let gastos = JSON.parse(localStorage.getItem("gastos")) || [];
+let gastos = JSON.parse(localStorage.getItem("gastos")) || []; // Nueva lista de gastos
 let clientes = JSON.parse(localStorage.getItem("clientes")) || {};
 let contadorProductos = JSON.parse(localStorage.getItem("contadorProductos")) || {};
 let inventario = JSON.parse(localStorage.getItem("inventario")) || {};
 let proximoRecibo = JSON.parse(localStorage.getItem("proximoRecibo")) || 1; 
+let baseCaja = JSON.parse(localStorage.getItem("baseCaja")) || 0; // Nueva base
 
 let carrito = [];
 let total = 0;
 
 window.onload = function() {
+    document.getElementById("base-diaria").value = baseCaja;
     mostrarProductos();
     actualizarTop();
     actualizarVistaInventario();
+};
+
+window.guardarBase = function() {
+    baseCaja = parseFloat(document.getElementById("base-diaria").value) || 0;
+    localStorage.setItem("baseCaja", JSON.stringify(baseCaja));
+    alert("Base de caja fijada en $" + baseCaja.toLocaleString());
 };
 
 function mostrarProductos() {
@@ -216,14 +229,6 @@ window.procesarPago = function() {
     if (pagoVal < total) return alert("Pago insuficiente");
 
     let ahora = new Date();
-    let cedula = document.getElementById("cliente-cedula").value;
-    
-    // Fidelización: Sumar compra
-    if(cedula && clientes[cedula]) {
-        clientes[cedula].compras = (clientes[cedula].compras || 0) + 1;
-        localStorage.setItem("clientes", JSON.stringify(clientes));
-    }
-
     let venta = {
         fecha: ahora.toLocaleDateString(),
         año: ahora.getFullYear(),
@@ -233,8 +238,7 @@ window.procesarPago = function() {
         detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", "),
         total: total, 
         recibo: "BH-" + String(proximoRecibo).padStart(2, '0'), 
-        metodo: document.getElementById("pago").dataset.metodo || "Efectivo",
-        cliente: cedula || "Anónimo"
+        metodo: document.getElementById("pago").dataset.metodo || "Efectivo"
     };
 
     ventas.push(venta);
@@ -247,7 +251,6 @@ window.procesarPago = function() {
             if (p.nombre.toLowerCase().includes(sabor.toLowerCase())) {
                 if (inventario[sabor] > 0) {
                     inventario[sabor] -= p.cantidad; 
-                    if (inventario[sabor] < 15 && inventario[sabor] > 0) alert(`¡PILAS! Solo quedan ${inventario[sabor]} de ${sabor}`);
                 }
             }
         }
@@ -260,8 +263,6 @@ window.procesarPago = function() {
     alert("Venta Exitosa ✅");
     carrito = []; total = 0;
     document.getElementById("pago").value = "";
-    document.getElementById("cliente-cedula").value = "";
-    document.getElementById("info-puntos").innerText = "";
     actualizarCarrito();
     actualizarTop();
     actualizarVistaInventario();
@@ -282,9 +283,10 @@ window.registrarGasto = function() {
 window.mostrarHistorialVentas = function() {
     let lista = document.getElementById("historial-ventas-lista");
     lista.innerHTML = "";
-    let hoy = new Date().toLocaleDateString();
-    let vHoy = ventas.filter(v => v.fecha === hoy);
-    let gHoy = gastos.filter(g => g.fecha === hoy);
+    let hoyStr = new Date().toLocaleDateString();
+    let vHoy = ventas.filter(v => v.fecha === hoyStr);
+    let gHoy = gastos.filter(g => g.fecha === hoyStr);
+    
     let tEfe = 0, tNeq = 0, tDav = 0, tGas = 0;
     vHoy.forEach(v => {
         if(v.metodo === 'Efectivo') tEfe += v.total;
@@ -293,27 +295,36 @@ window.mostrarHistorialVentas = function() {
     });
     gHoy.forEach(g => tGas += g.valor);
 
+    let fisicoEnCaja = (baseCaja + tEfe - tGas);
+
     let res = document.createElement("div");
-    res.style = "background:#333; color:white; padding:10px; border-radius:5px; margin-bottom:15px; font-size:0.85em;";
-    res.innerHTML = `<center><b>💰 CIERRE DE HOY (${hoy})</b></center><hr>
-        💵 Efec: $${tEfe.toLocaleString()} | 📱 Neq: $${tNeq.toLocaleString()} | 📲 Dav: $${tDav.toLocaleString()}<br>
-        💸 Gastos: -$${tGas.toLocaleString()} | <b style="color:#afffaf">Neto: $${(tEfe+tNeq+tDav-tGas).toLocaleString()}</b>`;
+    res.style = "background:#222; color:white; padding:15px; border-radius:8px; margin-bottom:15px; font-size:0.85em; border-left: 5px solid #4caf50;";
+    res.innerHTML = `
+        <center><b>📊 CUADRE DE CAJA (HOY)</b></center><hr>
+        🏠 Base de Inicio: $${baseCaja.toLocaleString()}<br>
+        🍦 Ventas Efectivo: $${tEfe.toLocaleString()}<br>
+        💸 Gastos (Insumos): -$${tGas.toLocaleString()}<hr>
+        <div style="font-size: 1.1em; color: #afffaf;"><b>EFECTIVO FÍSICO: $${fisicoEnCaja.toLocaleString()}</b></div>
+        <small style="opacity: 0.8;">(Base + Efectivo - Gastos)</small><hr>
+        📱 Nequi: $${tNeq.toLocaleString()} | 📲 Daviplata: $${tDav.toLocaleString()}<br>
+        <b>💰 VENTA TOTAL DÍA: $${(tEfe + tNeq + tDav).toLocaleString()}</b>
+    `;
     lista.appendChild(res);
 
     [...ventas].reverse().slice(0, 10).forEach((v, indexRev) => {
         let idx = ventas.length - 1 - indexRev;
         let div = document.createElement("div");
         div.style = "background:white; padding:8px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; display:flex; justify-content:space-between; font-size:0.75em;";
-        div.innerHTML = `<div><b>${v.recibo}</b> (${v.metodo}) - $${v.total.toLocaleString()}<br><small>${v.detalle}</small></div>
+        div.innerHTML = `<div><b>${v.recibo}</b> - $${v.total.toLocaleString()} (${v.metodo})</div>
                          <button onclick="anularVenta(${idx})" style="background:red; color:white; border:none; padding:5px; border-radius:3px;">X</button>`;
         lista.appendChild(div);
     });
 };
 
 window.anularVenta = function(index) {
-    let pass = prompt("CLAVE ADMIN:");
+    let pass = prompt("ADMIN CLAVE:");
     if (pass !== CLAVE_ADMIN) return alert("Error");
-    if (confirm("¿Anular?")) {
+    if (confirm("¿Anular venta?")) {
         let v = ventas[index];
         let items = v.detalle.split(", ");
         items.forEach(item => {
@@ -326,7 +337,7 @@ window.anularVenta = function(index) {
         localStorage.setItem("ventas", JSON.stringify(ventas));
         localStorage.setItem("inventario", JSON.stringify(inventario));
         localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
-        mostrarHistorialVentas(); actualizarTop(); actualizarVistaInventario();
+        mostrarHistorialVentas(); actualizarTop();
     }
 };
 
@@ -371,25 +382,19 @@ window.iniciarNuevoStock = function() { let s = prompt("Sabor:"); if (s) { inven
 
 function actualizarTop() {
     let hoy = new Date().toLocaleDateString();
-    let ayer = new Date(); ayer.setDate(ayer.getDate() - 1); let ayerStr = ayer.toLocaleDateString();
-    let tHoy = 0, tAyer = 0, tMes = 0, tPas = 0;
+    let tHoy = 0, tMes = 0;
     let mAct = new Date().getMonth() + 1, aAct = new Date().getFullYear();
-    let mPas = (mAct === 1) ? 12 : mAct - 1, aPas = (mAct === 1) ? aAct - 1 : aAct;
 
     ventas.forEach(v => {
         if (v.fecha === hoy) tHoy += v.total;
-        if (v.fecha === ayerStr) tAyer += v.total;
         if (v.mes === mAct && v.año === aAct) tMes += v.total;
-        if (v.mes === mPas && v.año === aPas) tPas += v.total;
     });
 
     let tGasMes = 0;
     gastos.filter(g => g.mes === mAct && g.año === aAct).forEach(g => tGasMes += g.valor);
 
     document.getElementById("reporte-hoy").innerText = "$" + tHoy.toLocaleString();
-    document.getElementById("reporte-ayer").innerText = "$" + tAyer.toLocaleString();
     document.getElementById("reporte-mes").innerText = "$" + (tMes - tGasMes).toLocaleString();
-    document.getElementById("reporte-mes-pasado").innerText = "$" + tPas.toLocaleString();
 
     let ord = Object.entries(contadorProductos).sort((a, b) => b[1] - a[1]);
     document.getElementById("top").innerText = ord[0] ? `${ord[0][0]} (${ord[0][1]})` : "N/A";
@@ -399,12 +404,8 @@ function actualizarTop() {
 window.toggleConfig = function() { let c = document.getElementById("config"); c.style.display = (c.style.display === "block") ? "none" : "block"; };
 
 window.exportarCSV = function() {
-    let op = prompt("1. Mes | 2. Todo | 3. Fecha (DD/MM/AAAA)", "1");
-    let fil = ventas;
-    if(op === "1") fil = ventas.filter(v => v.mes === (new Date().getMonth()+1));
-    else if(op === "3") { let f = prompt("Fecha:"); fil = ventas.filter(v => v.fecha === f); }
-    let csv = "AÑO;FECHA;HORA;RECIBO;DETALLE;TOTAL;PAGO;CLIENTE\n";
-    fil.forEach(v => { csv += `${v.año};${v.fecha};${v.hora};${v.recibo};${v.detalle};${v.total};${v.metodo};${v.cliente}\n`; });
+    let csv = "FECHA;RECIBO;DETALLE;TOTAL;PAGO\n";
+    ventas.forEach(v => { csv += `${v.fecha};${v.recibo};${v.detalle};${v.total};${v.metodo}\n`; });
     let b = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
     let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = "Reporte.csv"; l.click();
 };
@@ -414,21 +415,17 @@ window.limpiarHistorial = function() { if (confirm("¿Borrar todo?")) { localSto
 window.buscarCliente = function() {
     let ced = document.getElementById("cliente-cedula").value;
     let extra = document.getElementById("datos-cliente-extra");
-    let info = document.getElementById("info-puntos");
     if (clientes[ced]) {
         document.getElementById("cliente-nombre").value = clientes[ced].nombre;
-        document.getElementById("cliente-correo").value = clientes[ced].correo;
-        let n = clientes[ced].compras || 0;
-        info.innerHTML = `👤 ${clientes[ced].nombre} - Compra #${n+1} ${n >= 5 ? '<span class="badge-frecuente">VIP</span>' : ''}`;
         extra.style.display = "flex";
-    } else { info.innerText = ""; extra.style.display = (ced.length > 3) ? "flex" : "none"; }
+    } else { extra.style.display = (ced.length > 3) ? "flex" : "none"; }
 };
 
 window.registrarCliente = function() {
     let ced = document.getElementById("cliente-cedula").value;
     let nom = document.getElementById("cliente-nombre").value;
     if (!ced || !nom) return alert("Faltan datos");
-    clientes[ced] = { nombre: nom, correo: document.getElementById("cliente-correo").value, compras: 0 };
+    clientes[ced] = { nombre: nom, correo: document.getElementById("cliente-correo").value };
     localStorage.setItem("clientes", JSON.stringify(clientes));
     alert("Registrado"); buscarCliente();
 };
