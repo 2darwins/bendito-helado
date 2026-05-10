@@ -395,9 +395,40 @@ window.toggleConfig = function() {
     c.style.display = (c.style.display === "block") ? "none" : "block";
 };
 
+// --- FUNCIÓN MEJORADA: EXPORTAR POR FILTROS ---
 window.exportarCSV = function() {
+    if (ventas.length === 0) return alert("No hay ventas registradas.");
+
+    let opcion = prompt("¿Qué deseas exportar?\n1. Solo lo de ESTE MES\n2. TODO el Historial Completo\n3. Una FECHA específica (Ej: 09/05/2026)", "1");
+
+    let ventasFiltradas = [];
+    let nombreArchivo = "";
+    let hoy = new Date();
+
+    if (opcion === "1") {
+        let mesAct = hoy.getMonth() + 1;
+        let añoAct = hoy.getFullYear();
+        ventasFiltradas = ventas.filter(v => v.mes === mesAct && v.año === añoAct);
+        nombreArchivo = `Cierre_Mes_${mesAct}_${añoAct}.csv`;
+    } 
+    else if (opcion === "2") {
+        ventasFiltradas = ventas;
+        nombreArchivo = "Historial_Completo_Ventas.csv";
+    } 
+    else if (opcion === "3") {
+        let fechaBusca = prompt("Ingresa la fecha exacta (DD/MM/AAAA):", hoy.toLocaleDateString());
+        if (!fechaBusca) return;
+        ventasFiltradas = ventas.filter(v => v.fecha === fechaBusca);
+        nombreArchivo = `Ventas_Dia_${fechaBusca.replace(/\//g, '-')}.csv`;
+    } 
+    else {
+        return alert("Opción cancelada o no válida.");
+    }
+
+    if (ventasFiltradas.length === 0) return alert("No se encontraron ventas para esa selección.");
+
     let csv = "AÑO;FECHA;MES;HORA;RECIBO;DETALLE;CANTIDAD;VALOR UNIT;VALOR TOTAL;MEDIO DE PAGO\n";
-    ventas.forEach(v => {
+    ventasFiltradas.forEach(v => {
         let items = v.detalle.split(", ");
         items.forEach(item => {
             let espacioIdx = item.indexOf(" ");
@@ -408,10 +439,11 @@ window.exportarCSV = function() {
             csv += `${v.año};${v.fecha};${v.mes};${v.hora};${v.recibo};${nombreProd};${cant};${precioU};${cant * precioU};${v.metodo}\n`;
         });
     });
+
     let blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
     let link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "Ventas_Bendito_Helado.csv";
+    link.download = nombreArchivo;
     link.click();
 };
 
