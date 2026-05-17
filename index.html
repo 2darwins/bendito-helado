@@ -135,12 +135,12 @@ const CLAVE_ADMIN = "1234";
 
 let productos = JSON.parse(localStorage.getItem("productos")) || [];
 let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
-let gastos = JSON.parse(localStorage.getItem("gastos")) || []; // Nueva lista de gastos
+let gastos = JSON.parse(localStorage.getItem("gastos")) || []; 
 let clientes = JSON.parse(localStorage.getItem("clientes")) || {};
 let contadorProductos = JSON.parse(localStorage.getItem("contadorProductos")) || {};
 let inventario = JSON.parse(localStorage.getItem("inventario")) || {};
 let proximoRecibo = JSON.parse(localStorage.getItem("proximoRecibo")) || 1; 
-let baseCaja = JSON.parse(localStorage.getItem("baseCaja")) || 0; // Nueva base
+let baseCaja = JSON.parse(localStorage.getItem("baseCaja")) || 0; 
 
 let carrito = [];
 let total = 0;
@@ -381,20 +381,42 @@ function actualizarVistaInventario() {
 window.iniciarNuevoStock = function() { let s = prompt("Sabor:"); if (s) { inventario[s] = 0; comprarCaja(s); } }
 
 function actualizarTop() {
-    let hoy = new Date().toLocaleDateString();
-    let tHoy = 0, tMes = 0;
-    let mAct = new Date().getMonth() + 1, aAct = new Date().getFullYear();
+    let hoy = new Date();
+    let hoyStr = hoy.toLocaleDateString();
+    
+    // Calcular "Ayer" de forma exacta
+    let ayer = new Date();
+    ayer.setDate(hoy.getDate() - 1);
+    let ayerStr = ayer.toLocaleDateString();
 
+    let tHoy = 0, tAyer = 0, tMes = 0, tPas = 0;
+    let mAct = hoy.getMonth() + 1, aAct = hoy.getFullYear();
+    
+    // Calcular Mes Pasado correctamente de forma dinámica
+    let mPas = (mAct === 1) ? 12 : mAct - 1;
+    let aPas = (mAct === 1) ? aAct - 1 : aAct;
+
+    // Recorrer todo el historial de ventas para rellenar los 4 recuadros
     ventas.forEach(v => {
-        if (v.fecha === hoy) tHoy += v.total;
+        if (v.fecha === hoyStr) tHoy += v.total;
+        if (v.fecha === ayerStr) tAyer += v.total;
         if (v.mes === mAct && v.año === aAct) tMes += v.total;
+        if (v.mes === mPas && v.año === aPas) tPas += v.total;
     });
 
+    // Descontar gastos del mes actual si aplica
     let tGasMes = 0;
     gastos.filter(g => g.mes === mAct && g.año === aAct).forEach(g => tGasMes += g.valor);
 
+    // Descontar gastos del mes pasado si aplica
+    let tGasPas = 0;
+    gastos.filter(g => g.mes === mPas && g.año === aPas).forEach(g => tGasPas += g.valor);
+
+    // Pintar los datos reales en la administración
     document.getElementById("reporte-hoy").innerText = "$" + tHoy.toLocaleString();
+    document.getElementById("reporte-ayer").innerText = "$" + tAyer.toLocaleString();
     document.getElementById("reporte-mes").innerText = "$" + (tMes - tGasMes).toLocaleString();
+    document.getElementById("reporte-mes-pasado").innerText = "$" + (tPas - tGasPas).toLocaleString();
 
     let ord = Object.entries(contadorProductos).sort((a, b) => b[1] - a[1]);
     document.getElementById("top").innerText = ord[0] ? `${ord[0][0]} (${ord[0][1]})` : "N/A";
