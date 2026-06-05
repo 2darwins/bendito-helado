@@ -128,7 +128,7 @@
 
     <div style="background: #fff5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffcdd2;">
         <h4 style="margin-top: 0; color: #c62828;">❌ CIERRE Y ANULACIONES</h4>
-        <button onclick="mostrarHistorial Ventas()" style="width: 100%; padding: 8px; background: #576574; color: white; border: none; border-radius: 5px; font-size: 0.8em; margin-bottom: 10px;">REVISAR CUADRE Y VENTAS</button>
+        <button onclick="mostrarHistorialVentas()" style="width: 100%; padding: 8px; background: #576574; color: white; border: none; border-radius: 5px; font-size: 0.8em; margin-bottom: 10px;">REVISAR CUADRE Y VENTAS</button>
         <div id="historial-ventas-lista" style="max-height: 250px; overflow-y: auto;"></div>
     </div>
 
@@ -276,7 +276,7 @@ window.procesarPago = function() {
         año: ahora.getFullYear(),
         mes: ahora.getMonth() + 1,
         dia: ahora.getDate(),
-        hora: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+        hora: biore = ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
         detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", ") + (promoActiva ? " (PROMO 3x2)" : ""),
         total: total, 
         recibo: "BH-" + String(proximoRecibo).padStart(2, '0'), 
