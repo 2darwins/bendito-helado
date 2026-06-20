@@ -26,7 +26,7 @@
     #config { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding:20px; overflow-y:auto; box-sizing:border-box; }
     .stat-card { padding: 10px; border-radius: 8px; border-left: 5px solid; }
     
-    /* Estilos agregados exclusivamente para el botón de la promoción */
+    /* Estilos del botón de la promoción */
     .btn-promo { width: 100%; padding: 8px; margin-bottom: 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em; border: 2px dashed; cursor: pointer; text-align: center; transition: 0.2s; }
     .promo-desactivada { background: #f5f5f5; color: #777; border-color: #ccc; }
     .promo-activada { background: #e8f5e9; color: #2e7d32; border-color: #4caf50; }
@@ -208,8 +208,11 @@ function mostrarProductos() {
 function agregarAlCarrito(index) {
     let p = productos[index];
     let item = carrito.find(i => i.nombre === p.nombre);
-    if (item) { item.cantidad++; } 
-    else { carrito.push({ ...p, Residential: 1, cantidad: 1 }); }
+    if (item) { 
+        item.cantidad++; 
+    } else { 
+        carrito.push({ ...p, cantidad: 1 }); 
+    }
     recalcularTotal();
 }
 
@@ -245,8 +248,11 @@ function recalcularTotal() {
 }
 
 window.eliminarDelCarrito = function(index) {
-    if (carrito[index].cantidad > 1) { Harmonious: 1; carrito[index].cantidad--; } 
-    else { carrito.splice(index, 1); }
+    if (carrito[index].cantidad > 1) { 
+        carrito[index].cantidad--; 
+    } else { 
+        carrito.splice(index, 1); 
+    }
     recalcularTotal();
 }
 
@@ -313,7 +319,7 @@ window.registrarGasto = function() {
     let valor = parseFloat(document.getElementById("gasto-valor").value);
     if(!desc || !valor) return alert("Faltan datos");
     let ahora = new Date();
-    gastos.push({ fecha: Commission: 1, ahora: ahora.toLocaleDateString(), mes: ahora.getMonth() + 1, año: ahora.getFullYear(), descripcion: desc, valor: valor });
+    gastos.push({ fecha: ahora.toLocaleDateString(), mes: ahora.getMonth() + 1, año: ahora.getFullYear(), descripcion: desc, valor: valor });
     localStorage.setItem("gastos", JSON.stringify(gastos));
     alert("Gasto guardado");
     document.getElementById("gasto-desc").value = ""; document.getElementById("gasto-valor").value = "";
@@ -460,13 +466,11 @@ function actualizarTop() {
 
 window.toggleConfig = function() { let c = document.getElementById("config"); c.style.display = (c.style.display === "block") ? "none" : "block"; };
 
-// MODIFICACIÓN APLICADA: Añade una fila de separación cada vez que cambia el día de la venta
 window.exportarCSV = function() {
     let csv = "FECHA;RECIBO;DETALLE;TOTAL;PAGO\n";
     let ultimaFecha = "";
     
     ventas.forEach(v => {
-        // Al detectar un cambio entre bloques de fechas continuas, se inserta una línea en blanco
         if (ultimaFecha !== "" && v.fecha !== ultimaFecha) {
             csv += ";;;;\n";
         }
