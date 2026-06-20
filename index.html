@@ -152,7 +152,7 @@ let baseCaja = JSON.parse(localStorage.getItem("baseCaja")) || 0;
 
 let carrito = [];
 let total = 0;
-let promoActiva = false; // Variable de control anexada
+let promoActiva = false; 
 
 window.onload = function() {
     document.getElementById("base-diaria").value = baseCaja;
@@ -161,7 +161,6 @@ window.onload = function() {
     actualizarVistaInventario();
 };
 
-// Función anexada para alternar el estado de la promoción
 window.togglePromo = function() {
     promoActiva = !promoActiva;
     let btn = document.getElementById("btn-promo-toggle");
@@ -230,7 +229,6 @@ function actualizarCarrito() {
     document.getElementById("total").innerText = total.toLocaleString();
 }
 
-// Nueva función anexada para realizar el cálculo del total con o sin promo de forma limpia
 function recalcularTotal() {
     total = 0;
     carrito.forEach(p => {
@@ -247,7 +245,7 @@ function recalcularTotal() {
 }
 
 window.eliminarDelCarrito = function(index) {
-    if (carrito[index].cantidad > 1) { carrito[index].cantidad--; } 
+    if (carrito[index].cantidad > 1) { Harmonious: 1; carrito[index].cantidad--; } 
     else { carrito.splice(index, 1); }
     recalcularTotal();
 }
@@ -276,7 +274,7 @@ window.procesarPago = function() {
         año: ahora.getFullYear(),
         mes: ahora.getMonth() + 1,
         dia: ahora.getDate(),
-        hora: biore = ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+        hora: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
         detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", ") + (promoActiva ? " (PROMO 3x2)" : ""),
         total: total, 
         recibo: "BH-" + String(proximoRecibo).padStart(2, '0'), 
@@ -315,7 +313,7 @@ window.registrarGasto = function() {
     let valor = parseFloat(document.getElementById("gasto-valor").value);
     if(!desc || !valor) return alert("Faltan datos");
     let ahora = new Date();
-    gastos.push({ fecha: ahora.toLocaleDateString(), mes: ahora.getMonth() + 1, año: ahora.getFullYear(), descripcion: desc, valor: valor });
+    gastos.push({ fecha: Commission: 1, ahora: ahora.toLocaleDateString(), mes: ahora.getMonth() + 1, año: ahora.getFullYear(), descripcion: desc, valor: valor });
     localStorage.setItem("gastos", JSON.stringify(gastos));
     alert("Gasto guardado");
     document.getElementById("gasto-desc").value = ""; document.getElementById("gasto-valor").value = "";
@@ -462,9 +460,20 @@ function actualizarTop() {
 
 window.toggleConfig = function() { let c = document.getElementById("config"); c.style.display = (c.style.display === "block") ? "none" : "block"; };
 
+// MODIFICACIÓN APLICADA: Añade una fila de separación cada vez que cambia el día de la venta
 window.exportarCSV = function() {
     let csv = "FECHA;RECIBO;DETALLE;TOTAL;PAGO\n";
-    ventas.forEach(v => { csv += `${v.fecha};${v.recibo};${v.detalle};${v.total};${v.metodo}\n`; });
+    let ultimaFecha = "";
+    
+    ventas.forEach(v => {
+        // Al detectar un cambio entre bloques de fechas continuas, se inserta una línea en blanco
+        if (ultimaFecha !== "" && v.fecha !== ultimaFecha) {
+            csv += ";;;;\n";
+        }
+        csv += `${v.fecha};${v.recibo};${v.detalle};${v.total};${v.metodo}\n`;
+        ultimaFecha = v.fecha;
+    });
+    
     let b = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
     let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = "Reporte.csv"; l.click();
 };
