@@ -51,7 +51,7 @@
       <input type="number" id="cliente-cedula" placeholder="Cédula (Cliente Frecuente)" oninput="buscarCliente()" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
       <button onclick="registrarCliente()" style="background: #0288d1; color: white; border: none; border-radius: 4px; padding: 0 10px;">💾</button>
     </div>
-    <div id="datos-cliente-extra" style="display: none; display: flex; gap: 5px;">
+    <div id="datos-cliente-extra" style="display: none; gap: 5px;">
       <input type="text" id="cliente-nombre" placeholder="Nombre" style="flex: 1; padding: 5px; font-size: 0.8em;">
       <input type="email" id="cliente-correo" placeholder="Correo" style="flex: 1; padding: 5px; font-size: 0.8em;">
     </div>
@@ -309,6 +309,7 @@ window.procesarPago = function() {
     alert("Venta Exitosa ✅");
     carrito = []; total = 0;
     document.getElementById("pago").value = "";
+    delete document.getElementById("pago").dataset.metodo;
     actualizarCarrito();
     actualizarTop();
     actualizarVistaInventario();
@@ -398,7 +399,9 @@ window.agregarProducto = function() {
         productos.push({ nombre: nom, precio: pre, imagen: e.target.result });
         localStorage.setItem("productos", JSON.stringify(productos));
         mostrarProductos();
-        document.getElementById("nombre").value = ""; document.getElementById("precio").value = "";
+        document.getElementById("nombre").value = ""; 
+        document.getElementById("precio").value = "";
+        document.getElementById("imagen").value = "";
     };
     reader.readAsDataURL(img);
 };
@@ -488,9 +491,14 @@ window.buscarCliente = function() {
     let ced = document.getElementById("cliente-cedula").value;
     let extra = document.getElementById("datos-cliente-extra");
     if (clientes[ced]) {
-        document.getElementById("cliente-nombre").value = clientes[ced].nombre;
+        document.getElementById("cliente-nombre").value = clientes[ced].nombre || "";
+        document.getElementById("cliente-correo").value = clientes[ced].correo || "";
         extra.style.display = "flex";
-    } else { extra.style.display = (ced.length > 3) ? "flex" : "none"; }
+    } else { 
+        document.getElementById("cliente-nombre").value = "";
+        document.getElementById("cliente-correo").value = "";
+        extra.style.display = (ced.length > 3) ? "flex" : "none"; 
+    }
 };
 
 window.registrarCliente = function() {
