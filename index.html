@@ -21,15 +21,15 @@
     .pago-metodos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 8px; }
     .pago-metodos button { padding: 10px; border: none; border-radius: 5px; color: white; font-weight: bold; font-size: 0.75em; }
     #pago { flex: 1; padding: 10px; font-size: 1.1em; border-radius: 5px; border: 1px solid #ccc; text-align: center; }
-    .btn-cobrar { background: #e91e63; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; font-size: 1.2em; }
+    .btn-cobrar { background: #e91e63; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; font-size: 1.2em; cursor: pointer; }
     .config-btn { text-align: center; padding: 8px; background: #eee; font-size: 0.8em; cursor: pointer; }
     #config { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding:20px; overflow-y:auto; box-sizing:border-box; }
     .stat-card { padding: 10px; border-radius: 8px; border-left: 5px solid; }
     
-    /* Estilos del botón de la promoción */
-    .btn-promo { width: 100%; padding: 8px; margin-bottom: 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em; border: 2px dashed; cursor: pointer; text-align: center; transition: 0.2s; }
-    .promo-desactivada { background: #f5f5f5; color: #777; border-color: #ccc; }
-    .promo-activada { background: #e8f5e9; color: #2e7d32; border-color: #4caf50; }
+    /* Estilos del contenedor de la promoción */
+    .box-promo { border: 2px dashed #ccc; padding: 6px; border-radius: 6px; margin-bottom: 8px; background: #f5f5f5; display: flex; gap: 5px; align-items: center; }
+    .box-promo.activa { background: #e8f5e9; border-color: #4caf50; }
+    .btn-promo-toggle { flex: 1; padding: 8px; border-radius: 4px; font-weight: bold; font-size: 0.85em; border: none; cursor: pointer; text-align: center; }
   </style>
 </head>
 <body>
@@ -46,17 +46,6 @@
 </div>
 
 <div class="panel-pago">
-  <div style="background: #e1f5fe; padding: 8px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #b3e5fc; display: flex; flex-direction: column; gap: 5px;">
-    <div style="display: flex; gap: 5px;">
-      <input type="number" id="cliente-cedula" placeholder="Cédula (Cliente Frecuente)" oninput="buscarCliente()" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
-      <button onclick="registrarCliente()" style="background: #0288d1; color: white; border: none; border-radius: 4px; padding: 0 10px;">💾</button>
-    </div>
-    <div id="datos-cliente-extra" style="display: none; gap: 5px;">
-      <input type="text" id="cliente-nombre" placeholder="Nombre" style="flex: 1; padding: 5px; font-size: 0.8em;">
-      <input type="email" id="cliente-correo" placeholder="Correo" style="flex: 1; padding: 5px; font-size: 0.8em;">
-    </div>
-  </div>
-
   <div class="total-area">
     <span>TOTAL:</span>
     <h2>$<span id="total">0</span></h2>
@@ -71,9 +60,28 @@
     <div style="font-size: 0.9em; font-weight: bold;">Cambio: $<span id="cambio">0</span></div>
   </div>
   
-  <button id="btn-promo-toggle" onclick="togglePromo()" class="btn-promo promo-desactivada">🔴 PROMO 3x2 (3ro MITAD DE PRECIO) DESACTIVADA</button>
+  <!-- CONTENEDOR PROMO CON PORCENTAJE CONFIGURABLE -->
+  <div id="box-promo" class="box-promo">
+    <button id="btn-promo-toggle" onclick="togglePromo()" class="btn-promo-toggle" style="background:#ddd; color:#555;">🔴 PROMO 3ro DTO. DESACTIVADA</button>
+    <div style="display:flex; align-items:center; gap:2px; font-size:0.8em; font-weight:bold;">
+      <span>% Dto:</span>
+      <input type="number" id="porcentaje-promo" value="50" min="1" max="100" oninput="recalcularTotal()" style="width: 45px; padding: 4px; text-align: center; border-radius: 4px; border: 1px solid #ccc; font-weight:bold;">
+    </div>
+  </div>
   
   <button onclick="procesarPago()" class="btn-cobrar">FINALIZAR VENTA</button>
+</div>
+
+<!-- BLOQUE DE CLIENTES (UBICADO EN MEDIO DE "FINALIZAR VENTA" Y "ADMINISTRACIÓN") -->
+<div style="background: #e1f5fe; padding: 10px; border-top: 1px solid #b3e5fc; border-bottom: 1px solid #b3e5fc; display: flex; flex-direction: column; gap: 5px;">
+  <div style="display: flex; gap: 5px;">
+    <input type="number" id="cliente-cedula" placeholder="Cédula (Cliente Frecuente)" oninput="buscarCliente()" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
+    <button onclick="registrarCliente()" style="background: #0288d1; color: white; border: none; border-radius: 4px; padding: 0 12px; font-weight: bold; cursor: pointer;">💾 Guardar Cliente</button>
+  </div>
+  <div id="datos-cliente-extra" style="display: none; gap: 5px;">
+    <input type="text" id="cliente-nombre" placeholder="Nombre completo" style="flex: 1; padding: 6px; font-size: 0.85em; border: 1px solid #ccc; border-radius: 4px;">
+    <input type="email" id="cliente-correo" placeholder="Correo electrónico" style="flex: 1; padding: 6px; font-size: 0.85em; border: 1px solid #ccc; border-radius: 4px;">
+  </div>
 </div>
 
 <div class="config-btn" onclick="toggleConfig()">⚙️ ADMINISTRACIÓN</div>
@@ -163,13 +171,20 @@ window.onload = function() {
 
 window.togglePromo = function() {
     promoActiva = !promoActiva;
+    let box = document.getElementById("box-promo");
     let btn = document.getElementById("btn-promo-toggle");
+    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
+
     if(promoActiva) {
-        btn.className = "btn-promo promo-activada";
-        btn.innerText = "🍏 PROMO 3x2 (3ro MITAD DE PRECIO) ACTIVADA";
+        box.className = "box-promo activa";
+        btn.style.background = "#4caf50";
+        btn.style.color = "white";
+        btn.innerText = `🍏 PROMO (3ro ${porcentaje}% DTO) ACTIVADA`;
     } else {
-        btn.className = "btn-promo promo-desactivada";
-        btn.innerText = "🔴 PROMO 3x2 (3ro MITAD DE PRECIO) DESACTIVADA";
+        box.className = "box-promo";
+        btn.style.background = "#ddd";
+        btn.style.color = "#555";
+        btn.innerText = "🔴 PROMO 3ro DTO. DESACTIVADA";
     }
     recalcularTotal();
 };
@@ -219,12 +234,14 @@ function agregarAlCarrito(index) {
 function actualizarCarrito() {
     let lista = document.getElementById("carrito");
     lista.innerHTML = "";
+    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
+
     carrito.forEach((p, index) => {
         let li = document.createElement("li");
         let textoPromo = "";
         if (promoActiva && p.cantidad >= 3) {
             let regalados = Math.floor(p.cantidad / 3);
-            textoPromo = ` <small style="color:green;font-weight:bold;">(${regalados} dto. 50%)</small>`;
+            textoPromo = ` <small style="color:green;font-weight:bold;">(${regalados}x 3ro -${porcentaje}%)</small>`;
         }
         li.innerHTML = `<span>${p.cantidad} x $${p.precio.toLocaleString()}${textoPromo}</span> <span>${p.nombre}</span> <button onclick="eliminarDelCarrito(${index})" style="color:red; border:none; background:none; font-weight:bold;">X</button>`;
         lista.appendChild(li);
@@ -234,15 +251,25 @@ function actualizarCarrito() {
 
 function recalcularTotal() {
     total = 0;
+    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
+    let factorDescuento = (100 - porcentaje) / 100; // Ej: 50% = 0.5, 30% = 0.7
+
     carrito.forEach(p => {
         if (promoActiva && p.cantidad >= 3) {
             let gruposDeTres = Math.floor(p.cantidad / 3);
             let sueltos = p.cantidad % 3;
-            total += (gruposDeTres * 2.5 * p.precio) + (sueltos * p.precio);
+            // 2 unidades a precio full + 1 unidad con descuento
+            let precioGrupo = (2 * p.precio) + (1 * p.precio * factorDescuento);
+            total += (gruposDeTres * precioGrupo) + (sueltos * p.precio);
         } else {
             total += p.cantidad * p.precio;
         }
     });
+
+    if(promoActiva) {
+        document.getElementById("btn-promo-toggle").innerText = `🍏 PROMO (3ro ${porcentaje}% DTO) ACTIVADA`;
+    }
+
     actualizarCarrito();
     actualizarCambio();
 }
@@ -274,6 +301,7 @@ window.procesarPago = function() {
     let pagoVal = parseFloat(document.getElementById("pago").value) || 0;
     if (pagoVal < total) return alert("Pago insuficiente");
 
+    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
     let ahora = new Date();
     let venta = {
         fecha: ahora.toLocaleDateString(),
@@ -281,7 +309,7 @@ window.procesarPago = function() {
         mes: ahora.getMonth() + 1,
         dia: ahora.getDate(),
         hora: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-        detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", ") + (promoActiva ? " (PROMO 3x2)" : ""),
+        detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", ") + (promoActiva ? ` (PROMO 3ro -${porcentaje}%)` : ""),
         total: total, 
         recibo: "BH-" + String(proximoRecibo).padStart(2, '0'), 
         metodo: document.getElementById("pago").dataset.metodo || "Efectivo"
@@ -307,6 +335,10 @@ window.procesarPago = function() {
     localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
 
     alert("Venta Exitosa ✅");
+    
+    // Desactivar promo para la siguiente venta
+    if(promoActiva) togglePromo();
+
     carrito = []; total = 0;
     document.getElementById("pago").value = "";
     delete document.getElementById("pago").dataset.metodo;
@@ -373,7 +405,7 @@ window.anularVenta = function(index) {
     if (pass !== CLAVE_ADMIN) return alert("Error");
     if (confirm("¿Anular venta?")) {
         let v = ventas[index];
-        let detalleLimpio = v.detalle.replace(" (PROMO 3x2)", "");
+        let detalleLimpio = v.detalle.replace(/\s\(PROMO 3ro -.*?\)/, "");
         let items = detalleLimpio.split(", ");
         items.forEach(item => {
             let cant = parseInt(item.split(" ")[0]);
