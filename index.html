@@ -25,8 +25,11 @@
     .panel-pago { background: #fffde7; padding: 10px; border-top: 2px solid #ffe082; }
     .total-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .pago-metodos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 8px; }
-    .pago-metodos button { padding: 10px; border: none; border-radius: 5px; color: white; font-weight: bold; font-size: 0.75em; }
-    #pago { flex: 1; padding: 10px; font-size: 1.1em; border-radius: 5px; border: 1px solid #ccc; text-align: center; }
+    .pago-metodos button { padding: 10px; border: none; border-radius: 5px; color: white; font-weight: bold; font-size: 0.75em; cursor: pointer; }
+    .inputs-pago { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .input-group { display: flex; flex-direction: column; }
+    .input-group label { font-size: 0.7em; font-weight: bold; margin-bottom: 2px; color: #555; }
+    .input-group input { padding: 8px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc; text-align: center; font-weight: bold; }
     .btn-cobrar { background: #e91e63; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; font-size: 1.2em; cursor: pointer; }
     .config-btn { text-align: center; padding: 8px; background: #eee; font-size: 0.8em; cursor: pointer; }
     #config { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding:20px; overflow-y:auto; box-sizing:border-box; }
@@ -62,14 +65,27 @@
     <span>TOTAL:</span>
     <h2>$<span id="total">0</span></h2>
   </div>
+  
   <div class="pago-metodos">
-    <button onclick="pagoRapido('Efectivo')" style="background:#4caf50;">EFECTIVO</button>
-    <button onclick="pagoRapido('Nequi')" style="background:#7030a0;">NEQUI</button>
-    <button onclick="pagoRapido('Daviplata')" style="background:#ff0000;">DAVIPLATA</button>
+    <button onclick="pagoRapido('Efectivo')" style="background:#4caf50;">EFECTIVO TODO</button>
+    <button onclick="pagoRapido('Transferencia')" style="background:#7030a0;">TRANSFERENCIA TODO</button>
+    <button onclick="pagoRapido('Mixto')" style="background:#0288d1;">PAGO MIXTO</button>
   </div>
-  <div style="display: flex; gap: 5px; align-items: center; margin-bottom: 8px;">
-    <input type="number" id="pago" placeholder="Efectivo recibido" oninput="actualizarCambio()">
-    <div style="font-size: 0.9em; font-weight: bold;">Cambio: $<span id="cambio">0</span></div>
+
+  <div class="inputs-pago">
+    <div class="input-group">
+      <label>💵 EFECTIVO RECIBIDO</label>
+      <input type="number" id="pago-efectivo" placeholder="0" oninput="actualizarCambio()">
+    </div>
+    <div class="input-group">
+      <label>📲 TRANSFERENCIA</label>
+      <input type="number" id="pago-transferencia" placeholder="0" oninput="actualizarCambio()">
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; font-size: 0.9em; font-weight: bold; margin-bottom: 8px; background: #fff; padding: 6px 10px; border-radius: 4px; border: 1px solid #e0e0e0;">
+    <div>Falta cubrir: $<span id="pendiente" style="color: #c62828;">0</span></div>
+    <div>Cambio: $<span id="cambio" style="color: #2e7d32;">0</span></div>
   </div>
   
   <!-- CONTENEDOR PROMO CON PORCENTAJE CONFIGURABLE -->
@@ -343,16 +359,40 @@ window.eliminarDelCarrito = function(index) {
 
 window.actualizarCambio = function() {
     let totalActual = calcularTotalPedido(pedidos[pedidoActivoIdx]);
-    let pago = parseFloat(document.getElementById("pago").value) || 0;
-    let cambio = pago >= totalActual ? pago - totalActual : 0;
+    let efe = parseFloat(document.getElementById("pago-efectivo").value) || 0;
+    let tra = parseFloat(document.getElementById("pago-transferencia").value) || 0;
+    let totalPagado = efe + tra;
+
+    let cambio = 0;
+    let pendiente = 0;
+
+    if (totalPagado >= totalActual) {
+        cambio = totalPagado - totalActual;
+        pendiente = 0;
+    } else {
+        cambio = 0;
+        pendiente = totalActual - totalPagado;
+    }
+
     document.getElementById("cambio").innerText = cambio.toLocaleString();
+    document.getElementById("pendiente").innerText = pendiente.toLocaleString();
 };
 
 window.pagoRapido = function(metodo) {
     let totalActual = calcularTotalPedido(pedidos[pedidoActivoIdx]);
-    let input = document.getElementById("pago");
-    input.dataset.metodo = metodo; 
-    input.value = (metodo === 'Efectivo') ? "" : totalActual;
+    let inEfe = document.getElementById("pago-efectivo");
+    let inTra = document.getElementById("pago-transferencia");
+
+    if (metodo === 'Efectivo') {
+        inEfe.value = totalActual;
+        inTra.value = "";
+    } else if (metodo === 'Transferencia') {
+        inEfe.value = "";
+        inTra.value = totalActual;
+    } else if (metodo === 'Mixto') {
+        inEfe.value = Math.round(totalActual / 2);
+        inTra.value = totalActual - parseFloat(inEfe.value);
+    }
     actualizarCambio();
 };
 
@@ -361,8 +401,19 @@ window.procesarPago = function() {
     let totalActual = calcularTotalPedido(ped);
     
     if (totalActual === 0) return;
-    let pagoVal = parseFloat(document.getElementById("pago").value) || 0;
-    if (pagoVal < totalActual) return alert("Pago insuficiente");
+
+    let efe = parseFloat(document.getElementById("pago-efectivo").value) || 0;
+    let tra = parseFloat(document.getElementById("pago-transferencia").value) || 0;
+    let totalPagado = efe + tra;
+
+    if (totalPagado < totalActual) return alert("El pago total es insuficiente para cubrir la cuenta.");
+
+    let metodoRegistrado = "Efectivo";
+    if (efe > 0 && tra > 0) {
+        metodoRegistrado = "Mixto";
+    } else if (tra > 0) {
+        metodoRegistrado = "Transferencia";
+    }
 
     let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
     let ahora = new Date();
@@ -374,8 +425,10 @@ window.procesarPago = function() {
         hora: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
         detalle: ped.carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", ") + (ped.promoActiva ? ` (PROMO 3ro -${porcentaje}%)` : ""),
         total: totalActual, 
+        pagoEfectivo: efe,
+        pagoTransferencia: tra,
         recibo: "BH-" + String(proximoRecibo).padStart(2, '0'), 
-        metodo: document.getElementById("pago").dataset.metodo || "Efectivo"
+        metodo: metodoRegistrado
     };
 
     ventas.push(venta);
@@ -403,8 +456,8 @@ window.procesarPago = function() {
     ped.carrito = [];
     ped.promoActiva = false;
 
-    document.getElementById("pago").value = "";
-    delete document.getElementById("pago").dataset.metodo;
+    document.getElementById("pago-efectivo").value = "";
+    document.getElementById("pago-transferencia").value = "";
 
     renderTabsPedidos();
     cambiarPedido(pedidoActivoIdx);
@@ -431,11 +484,15 @@ window.mostrarHistorialVentas = function() {
     let vHoy = ventas.filter(v => v.fecha === hoyStr);
     let gHoy = gastos.filter(g => g.fecha === hoyStr);
     
-    let tEfe = 0, tNeq = 0, tDav = 0, tGas = 0;
+    let tEfe = 0, tTra = 0, tGas = 0;
     vHoy.forEach(v => {
-        if(v.metodo === 'Efectivo') tEfe += v.total;
-        else if(v.metodo === 'Nequi') tNeq += v.total;
-        else if(v.metodo === 'Daviplata') tDav += v.total;
+        if (v.pagoEfectivo !== undefined || v.pagoTransferencia !== undefined) {
+            tEfe += (v.pagoEfectivo || 0);
+            tTra += (v.pagoTransferencia || 0);
+        } else {
+            if (v.metodo === 'Efectivo') tEfe += v.total;
+            else tTra += v.total;
+        }
     });
     gHoy.forEach(g => tGas += g.valor);
 
@@ -450,8 +507,8 @@ window.mostrarHistorialVentas = function() {
         💸 Gastos (Insumos): -$${tGas.toLocaleString()}<hr>
         <div style="font-size: 1.1em; color: #afffaf;"><b>EFECTIVO FÍSICO: $${fisicoEnCaja.toLocaleString()}</b></div>
         <small style="opacity: 0.8;">(Base + Efectivo - Gastos)</small><hr>
-        📱 Nequi: $${tNeq.toLocaleString()} | 📲 Daviplata: $${tDav.toLocaleString()}<br>
-        <b>💰 VENTA TOTAL DÍA: $${(tEfe + tNeq + tDav).toLocaleString()}</b>
+        📲 Transferencias: $${tTra.toLocaleString()}<br>
+        <b>💰 VENTA TOTAL DÍA: $${(tEfe + tTra).toLocaleString()}</b>
     `;
     lista.appendChild(res);
 
@@ -459,7 +516,13 @@ window.mostrarHistorialVentas = function() {
         let idx = ventas.length - 1 - indexRev;
         let div = document.createElement("div");
         div.style = "background:white; padding:8px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; display:flex; justify-content:space-between; font-size:0.75em;";
-        div.innerHTML = `<div><b>${v.recibo}</b> - $${v.total.toLocaleString()} (${v.metodo})</div>
+        
+        let desglose = v.metodo;
+        if (v.metodo === "Mixto") {
+            desglose = `Mixto: Ef $${(v.pagoEfectivo||0).toLocaleString()} / Tr $${(v.pagoTransferencia||0).toLocaleString()}`;
+        }
+
+        div.innerHTML = `<div><b>${v.recibo}</b> - $${v.total.toLocaleString()} (${desglose})</div>
                          <button onclick="anularVenta(${idx})" style="background:red; color:white; border:none; padding:5px; border-radius:3px;">X</button>`;
         lista.appendChild(div);
     });
@@ -567,14 +630,16 @@ function actualizarTop() {
 window.toggleConfig = function() { let c = document.getElementById("config"); c.style.display = (c.style.display === "block") ? "none" : "block"; };
 
 window.exportarCSV = function() {
-    let csv = "FECHA;RECIBO;DETALLE;TOTAL;PAGO\n";
+    let csv = "FECHA;RECIBO;DETALLE;TOTAL;PAGO;EFECTIVO;TRANSFERENCIA\n";
     let ultimaFecha = "";
     
     ventas.forEach(v => {
         if (ultimaFecha !== "" && v.fecha !== ultimaFecha) {
-            csv += ";;;;\n";
+            csv += ";;;;;;\n";
         }
-        csv += `${v.fecha};${v.recibo};${v.detalle};${v.total};${v.metodo}\n`;
+        let efe = v.pagoEfectivo !== undefined ? v.pagoEfectivo : (v.metodo === 'Efectivo' ? v.total : 0);
+        let tra = v.pagoTransferencia !== undefined ? v.pagoTransferencia : (v.metodo !== 'Efectivo' ? v.total : 0);
+        csv += `${v.fecha};${v.recibo};${v.detalle};${v.total};${v.metodo};${efe};${tra}\n`;
         ultimaFecha = v.fecha;
     });
     
