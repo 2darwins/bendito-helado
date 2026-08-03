@@ -7,6 +7,12 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f9f9f9; }
     header { background: #e91e63; color: white; padding: 8px; text-align: center; font-weight: bold; font-size: 1.1em; }
+    
+    /* Control de Pedidos Simultáneos / Cuentas */
+    .tabs-pedidos { display: flex; background: #333; overflow-x: auto; padding: 3px 5px; gap: 4px; }
+    .tab-btn { background: #555; color: white; border: none; padding: 6px 10px; font-size: 0.75em; font-weight: bold; border-radius: 3px; cursor: pointer; white-space: nowrap; }
+    .tab-btn.activa { background: #e91e63; color: white; }
+
     .recibo-top { background: #fff; border-bottom: 2px solid #ddd; height: 80px; overflow-y: auto; padding: 5px 15px; font-family: monospace; font-size: 0.85em; }
     #carrito { list-style: none; padding: 0; margin: 0; }
     #carrito li { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding: 2px 0; }
@@ -36,8 +42,14 @@
 
 <header>BENDITO HELADO</header>
 
+<!-- BARRA DE PEDIDOS MULTIPLES / CUENTAS SIMULTÁNEAS -->
+<div class="tabs-pedidos" id="tabs-pedidos"></div>
+
 <div class="recibo-top">
-  <div style="font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 3px;">PEDIDO ACTUAL:</div>
+  <div style="display:flex; justify-content:space-between; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 3px;">
+    <span id="titulo-pedido-actual">PEDIDO 1:</span>
+    <button onclick="limpiarPedidoActual()" style="background:#ff5252; color:white; border:none; border-radius:3px; padding:1px 6px; font-size:0.8em; cursor:pointer;">Limpiar Cuenta</button>
+  </div>
   <ul id="carrito"></ul>
 </div>
 
@@ -158,24 +170,49 @@ let inventario = JSON.parse(localStorage.getItem("inventario")) || {};
 let proximoRecibo = JSON.parse(localStorage.getItem("proximoRecibo")) || 1; 
 let baseCaja = JSON.parse(localStorage.getItem("baseCaja")) || 0; 
 
-let carrito = [];
-let total = 0;
-let promoActiva = false; 
+// ESTRUCTURA DE PEDIDOS SIMULTÁNEOS (HASTA 4 CUENTAS AL TIEMPO)
+let pedidos = [
+    { id: 1, carrito: [], promoActiva: false },
+    { id: 2, carrito: [], promoActiva: false },
+    { id: 3, carrito: [], promoActiva: false },
+    { id: 4, carrito: [], promoActiva: false }
+];
+let pedidoActivoIdx = 0;
 
 window.onload = function() {
     document.getElementById("base-diaria").value = baseCaja;
+    renderTabsPedidos();
     mostrarProductos();
     actualizarTop();
     actualizarVistaInventario();
+    recalcularTotal();
 };
 
-window.togglePromo = function() {
-    promoActiva = !promoActiva;
+function renderTabsPedidos() {
+    let tabs = document.getElementById("tabs-pedidos");
+    tabs.innerHTML = "";
+    pedidos.forEach((p, index) => {
+        let totalItems = p.carrito.reduce((sum, item) => sum + item.cantidad, 0);
+        let btn = document.createElement("button");
+        btn.className = "tab-btn " + (index === pedidoActivoIdx ? "activa" : "");
+        btn.innerText = `🛒 Pedido ${p.id} ${totalItems > 0 ? '(' + totalItems + ')' : ''}`;
+        btn.onclick = () => cambiarPedido(index);
+        tabs.appendChild(btn);
+    });
+    document.getElementById("titulo-pedido-actual").innerText = `PEDIDO ${pedidos[pedidoActivoIdx].id}:`;
+}
+
+function cambiarPedido(index) {
+    pedidoActivoIdx = index;
+    renderTabsPedidos();
+    
+    // Sincronizar estado visual de la promo con el pedido activo
+    let promo = pedidos[pedidoActivoIdx].promoActiva;
     let box = document.getElementById("box-promo");
     let btn = document.getElementById("btn-promo-toggle");
     let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
 
-    if(promoActiva) {
+    if(promo) {
         box.className = "box-promo activa";
         btn.style.background = "#4caf50";
         btn.style.color = "white";
@@ -186,7 +223,22 @@ window.togglePromo = function() {
         btn.style.color = "#555";
         btn.innerText = "🔴 PROMO 3ro DTO. DESACTIVADA";
     }
+
     recalcularTotal();
+}
+
+window.limpiarPedidoActual = function() {
+    if(pedidos[pedidoActivoIdx].carrito.length === 0) return;
+    if(confirm(`¿Vaciar la cuenta del Pedido ${pedidos[pedidoActivoIdx].id}?`)) {
+        pedidos[pedidoActivoIdx].carrito = [];
+        pedidos[pedidoActivoIdx].promoActiva = false;
+        cambiarPedido(pedidoActivoIdx);
+    }
+};
+
+window.togglePromo = function() {
+    pedidos[pedidoActivoIdx].promoActiva = !pedidos[pedidoActivoIdx].promoActiva;
+    cambiarPedido(pedidoActivoIdx);
 };
 
 window.guardarBase = function() {
@@ -222,12 +274,14 @@ function mostrarProductos() {
 
 function agregarAlCarrito(index) {
     let p = productos[index];
-    let item = carrito.find(i => i.nombre === p.nombre);
+    let car = pedidos[pedidoActivoIdx].carrito;
+    let item = car.find(i => i.nombre === p.nombre);
     if (item) { 
         item.cantidad++; 
     } else { 
-        carrito.push({ ...p, cantidad: 1 }); 
+        car.push({ ...p, cantidad: 1 }); 
     }
+    renderTabsPedidos();
     recalcularTotal();
 }
 
@@ -235,71 +289,80 @@ function actualizarCarrito() {
     let lista = document.getElementById("carrito");
     lista.innerHTML = "";
     let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
+    let car = pedidos[pedidoActivoIdx].carrito;
+    let promo = pedidos[pedidoActivoIdx].promoActiva;
 
-    carrito.forEach((p, index) => {
+    car.forEach((p, index) => {
         let li = document.createElement("li");
         let textoPromo = "";
-        if (promoActiva && p.cantidad >= 3) {
+        if (promo && p.cantidad >= 3) {
             let regalados = Math.floor(p.cantidad / 3);
             textoPromo = ` <small style="color:green;font-weight:bold;">(${regalados}x 3ro -${porcentaje}%)</small>`;
         }
         li.innerHTML = `<span>${p.cantidad} x $${p.precio.toLocaleString()}${textoPromo}</span> <span>${p.nombre}</span> <button onclick="eliminarDelCarrito(${index})" style="color:red; border:none; background:none; font-weight:bold;">X</button>`;
         lista.appendChild(li);
     });
-    document.getElementById("total").innerText = total.toLocaleString();
+    
+    let totalActual = calcularTotalPedido(pedidos[pedidoActivoIdx]);
+    document.getElementById("total").innerText = totalActual.toLocaleString();
+}
+
+function calcularTotalPedido(ped) {
+    let tot = 0;
+    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
+    let factorDescuento = (100 - porcentaje) / 100;
+
+    ped.carrito.forEach(p => {
+        if (ped.promoActiva && p.cantidad >= 3) {
+            let gruposDeTres = Math.floor(p.cantidad / 3);
+            let sueltos = p.cantidad % 3;
+            let precioGrupo = (2 * p.precio) + (1 * p.precio * factorDescuento);
+            tot += (gruposDeTres * precioGrupo) + (sueltos * p.precio);
+        } else {
+            tot += p.cantidad * p.precio;
+        }
+    });
+    return tot;
 }
 
 function recalcularTotal() {
-    total = 0;
-    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
-    let factorDescuento = (100 - porcentaje) / 100; // Ej: 50% = 0.5, 30% = 0.7
-
-    carrito.forEach(p => {
-        if (promoActiva && p.cantidad >= 3) {
-            let gruposDeTres = Math.floor(p.cantidad / 3);
-            let sueltos = p.cantidad % 3;
-            // 2 unidades a precio full + 1 unidad con descuento
-            let precioGrupo = (2 * p.precio) + (1 * p.precio * factorDescuento);
-            total += (gruposDeTres * precioGrupo) + (sueltos * p.precio);
-        } else {
-            total += p.cantidad * p.precio;
-        }
-    });
-
-    if(promoActiva) {
-        document.getElementById("btn-promo-toggle").innerText = `🍏 PROMO (3ro ${porcentaje}% DTO) ACTIVADA`;
-    }
-
     actualizarCarrito();
     actualizarCambio();
 }
 
 window.eliminarDelCarrito = function(index) {
-    if (carrito[index].cantidad > 1) { 
-        carrito[index].cantidad--; 
+    let car = pedidos[pedidoActivoIdx].carrito;
+    if (car[index].cantidad > 1) { 
+        car[index].cantidad--; 
     } else { 
-        carrito.splice(index, 1); 
+        car.splice(index, 1); 
     }
+    renderTabsPedidos();
     recalcularTotal();
 }
 
 window.actualizarCambio = function() {
+    let totalActual = calcularTotalPedido(pedidos[pedidoActivoIdx]);
     let pago = parseFloat(document.getElementById("pago").value) || 0;
-    let cambio = pago >= total ? pago - total : 0;
+    let cambio = pago >= totalActual ? pago - totalActual : 0;
     document.getElementById("cambio").innerText = cambio.toLocaleString();
 };
 
 window.pagoRapido = function(metodo) {
+    let totalActual = calcularTotalPedido(pedidos[pedidoActivoIdx]);
     let input = document.getElementById("pago");
     input.dataset.metodo = metodo; 
-    input.value = (metodo === 'Efectivo') ? "" : total;
+    input.value = (metodo === 'Efectivo') ? "" : totalActual;
     actualizarCambio();
 };
 
 window.procesarPago = function() {
-    if (total === 0) return;
+    let ped = pedidos[pedidoActivoIdx];
+    let totalActual = calcularTotalPedido(ped);
+    
+    if (totalActual === 0) return;
     let pagoVal = parseFloat(document.getElementById("pago").value) || 0;
-    if (pagoVal < total) return alert("Pago insuficiente");
+    if (pagoVal < totalActual) return alert("Pago insuficiente");
 
     let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
     let ahora = new Date();
@@ -309,8 +372,8 @@ window.procesarPago = function() {
         mes: ahora.getMonth() + 1,
         dia: ahora.getDate(),
         hora: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-        detalle: carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", ") + (promoActiva ? ` (PROMO 3ro -${porcentaje}%)` : ""),
-        total: total, 
+        detalle: ped.carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", ") + (ped.promoActiva ? ` (PROMO 3ro -${porcentaje}%)` : ""),
+        total: totalActual, 
         recibo: "BH-" + String(proximoRecibo).padStart(2, '0'), 
         metodo: document.getElementById("pago").dataset.metodo || "Efectivo"
     };
@@ -319,7 +382,7 @@ window.procesarPago = function() {
     proximoRecibo++;
     localStorage.setItem("proximoRecibo", JSON.stringify(proximoRecibo));
 
-    carrito.forEach(p => { 
+    ped.carrito.forEach(p => { 
         contadorProductos[p.nombre] = (contadorProductos[p.nombre] || 0) + p.cantidad;
         for (let sabor in inventario) {
             if (p.nombre.toLowerCase().includes(sabor.toLowerCase())) {
@@ -334,15 +397,17 @@ window.procesarPago = function() {
     localStorage.setItem("inventario", JSON.stringify(inventario));
     localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
 
-    alert("Venta Exitosa ✅");
+    alert(`Venta Pedido ${ped.id} Exitosa ✅`);
     
-    // Desactivar promo para la siguiente venta
-    if(promoActiva) togglePromo();
+    // Resetear solo la cuenta que se acaba de pagar
+    ped.carrito = [];
+    ped.promoActiva = false;
 
-    carrito = []; total = 0;
     document.getElementById("pago").value = "";
     delete document.getElementById("pago").dataset.metodo;
-    actualizarCarrito();
+
+    renderTabsPedidos();
+    cambiarPedido(pedidoActivoIdx);
     actualizarTop();
     actualizarVistaInventario();
 };
