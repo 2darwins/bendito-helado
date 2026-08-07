@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Bendito Helado POS</title>
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    
     body { font-family: Arial, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f9f9f9; }
     header { background: #e91e63; color: white; padding: 8px; text-align: center; font-weight: bold; font-size: 1.1em; }
     
@@ -22,17 +24,22 @@
     .card strong { font-size: 0.6em; line-height: 1; }
     .card img { width: 100%; height: 45px; object-fit: cover; border-radius: 3px; }
     .card span { font-size: 0.75em; }
-    .panel-pago { background: #fffde7; padding: 10px; border-top: 2px solid #ffe082; }
+    .panel-pago { background: #fffde7; padding: 10px; border-top: 2px solid #ffe082; width: 100%; }
     .total-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .pago-metodos { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-bottom: 8px; }
-    .pago-metodos button { padding: 10px; border: none; border-radius: 5px; color: white; font-weight: bold; font-size: 0.75em; cursor: pointer; }
-    .inputs-pago { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-    .input-group { display: flex; flex-direction: column; }
-    .input-group label { font-size: 0.7em; font-weight: bold; margin-bottom: 2px; color: #555; }
-    .input-group input { padding: 8px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc; text-align: center; font-weight: bold; }
+    
+    /* Ajustes para métodos de pago y botones de arriba */
+    .pago-metodos { display: flex; gap: 5px; margin-bottom: 8px; width: 100%; }
+    .pago-metodos button { flex: 1; min-width: 0; padding: 10px 4px; border: none; border-radius: 5px; color: white; font-weight: bold; font-size: 0.7em; cursor: pointer; text-align: center; }
+
+    /* Ajuste responsivo de las casillas de Efectivo y Transferencia */
+    .inputs-pago { display: flex; gap: 8px; margin-bottom: 8px; width: 100%; }
+    .input-group { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .input-group label { font-size: 0.65em; font-weight: bold; margin-bottom: 2px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .input-group input { width: 100%; padding: 8px 4px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc; text-align: center; font-weight: bold; }
+    
     .btn-cobrar { background: #e91e63; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; font-size: 1.2em; cursor: pointer; }
     .config-btn { text-align: center; padding: 8px; background: #eee; font-size: 0.8em; cursor: pointer; }
-    #config { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding:20px; overflow-y:auto; box-sizing:border-box; }
+    #config { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding:20px; overflow-y:auto; }
     .stat-card { padding: 10px; border-radius: 8px; border-left: 5px solid; }
     
     /* Estilos del contenedor de la promoción */
@@ -100,7 +107,7 @@
   <button onclick="procesarPago()" class="btn-cobrar">FINALIZAR VENTA</button>
 </div>
 
-<!-- BLOQUE DE CLIENTES (UBICADO EN MEDIO DE "FINALIZAR VENTA" Y "ADMINISTRACIÓN") -->
+<!-- BLOQUE DE CLIENTES -->
 <div style="background: #e1f5fe; padding: 10px; border-top: 1px solid #b3e5fc; border-bottom: 1px solid #b3e5fc; display: flex; flex-direction: column; gap: 5px;">
   <div style="display: flex; gap: 5px;">
     <input type="number" id="cliente-cedula" placeholder="Cédula (Cliente Frecuente)" oninput="buscarCliente()" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
@@ -139,8 +146,8 @@
 
     <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffb74d;">
         <h4 style="margin-top: 0; color: #e65100;">💸 REGISTRAR GASTO (Insumos)</h4>
-        <input type="text" id="gasto-desc" placeholder="¿Qué compraste? (Ej: Servilletas)" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
-        <input type="number" id="gasto-valor" placeholder="Valor $" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
+        <input type="text" id="gasto-desc" placeholder="¿Qué compraste? (Ej: Servilletas)" style="width: 100%; padding: 8px; margin-bottom: 8px;">
+        <input type="number" id="gasto-valor" placeholder="Valor $" style="width: 100%; padding: 8px; margin-bottom: 8px;">
         <button onclick="registrarGasto()" style="width: 100%; padding: 10px; background: #ff9800; color: white; border: none; border-radius: 5px; font-weight: bold;">GUARDAR GASTO</button>
     </div>
 
@@ -151,8 +158,8 @@
 
     <div style="background: #eee; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
         <h4 style="margin-top: 0;">+ AGREGAR PRODUCTO</h4>
-        <input type="text" id="nombre" placeholder="Nombre" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
-        <input type="number" id="precio" placeholder="Precio" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box;">
+        <input type="text" id="nombre" placeholder="Nombre" style="width: 100%; padding: 8px; margin-bottom: 8px;">
+        <input type="number" id="precio" placeholder="Precio" style="width: 100%; padding: 8px; margin-bottom: 8px;">
         <input type="file" id="imagen" style="margin-bottom: 10px; width: 100%;">
         <button onclick="agregarProducto()" style="width: 100%; padding: 10px; background: #e91e63; color: white; border: none; border-radius: 5px; font-weight: bold;">GUARDAR</button>
     </div>
@@ -186,7 +193,6 @@ let inventario = JSON.parse(localStorage.getItem("inventario")) || {};
 let proximoRecibo = JSON.parse(localStorage.getItem("proximoRecibo")) || 1; 
 let baseCaja = JSON.parse(localStorage.getItem("baseCaja")) || 0; 
 
-// ESTRUCTURA DE PEDIDOS SIMULTÁNEOS (HASTA 4 CUENTAS AL TIEMPO)
 let pedidos = [
     { id: 1, carrito: [], promoActiva: false },
     { id: 2, carrito: [], promoActiva: false },
@@ -222,7 +228,6 @@ function cambiarPedido(index) {
     pedidoActivoIdx = index;
     renderTabsPedidos();
     
-    // Sincronizar estado visual de la promo con el pedido activo
     let promo = pedidos[pedidoActivoIdx].promoActiva;
     let box = document.getElementById("box-promo");
     let btn = document.getElementById("btn-promo-toggle");
@@ -452,7 +457,6 @@ window.procesarPago = function() {
 
     alert(`Venta Pedido ${ped.id} Exitosa ✅`);
     
-    // Resetear solo la cuenta que se acaba de pagar
     ped.carrito = [];
     ped.promoActiva = false;
 
@@ -475,7 +479,7 @@ window.registrarGasto = function() {
     alert("Gasto guardado");
     document.getElementById("gasto-desc").value = ""; document.getElementById("gasto-valor").value = "";
     actualizarTop();
-}
+};
 
 window.mostrarHistorialVentas = function() {
     let lista = document.getElementById("historial-ventas-lista");
@@ -568,7 +572,7 @@ window.agregarProducto = function() {
 
 window.eliminarProductoMenu = function(i) { if(confirm("¿Borrar?")) { productos.splice(i, 1); localStorage.setItem("productos", JSON.stringify(productos)); mostrarProductos(); } };
 
-window.eliminarCajaSoloStock = function(sabor) { if(confirm("¿Borrar stock?")) { delete inventario[sabor]; localStorage.setItem("inventario", JSON.stringify(inventario)); actualizarVistaInventario(); } }
+window.eliminarCajaSoloStock = function(sabor) { if(confirm("¿Borrar stock?")) { delete inventario[sabor]; localStorage.setItem("inventario", JSON.stringify(inventario)); actualizarVistaInventario(); } };
 
 window.comprarCaja = function(sabor) {
     let cant = prompt(`Cantidad para ${sabor}:`, "100");
@@ -588,7 +592,7 @@ function actualizarVistaInventario() {
     divInv.innerHTML += `<button onclick="iniciarNuevoStock()" style="width:100%; margin-top:10px; padding:8px; background:#333; color:white; border:none; border-radius:5px; font-size:0.8em;">+ CONTROLAR OTRO SABOR</button>`;
 }
 
-window.iniciarNuevoStock = function() { let s = prompt("Sabor:"); if (s) { inventario[s] = 0; comprarCaja(s); } }
+window.iniciarNuevoStock = function() { let s = prompt("Sabor:"); if (s) { inventario[s] = 0; comprarCaja(s); } };
 
 function actualizarTop() {
     let hoy = new Date();
@@ -637,18 +641,34 @@ window.exportarCSV = function() {
         if (ultimaFecha !== "" && v.fecha !== ultimaFecha) {
             csv += ";;;;;;\n";
         }
-        let efe = v.pagoEfectivo !== undefined ? v.pagoEfectivo : (v.metodo === 'Efectivo' ? v.total : 0);
-        let tra = v.pagoTransferencia !== undefined ? v.pagoTransferencia : (v.metodo !== 'Efectivo' ? v.total : 0);
-        csv += `${v.fecha};${v.recibo};${v.detalle};${v.total};${v.metodo};${efe};${tra}\n`;
+        csv += `${v.fecha};${v.recibo};"${v.detalle}";${v.total};${v.metodo};${v.pagoEfectivo||0};${v.pagoTransferencia||0}\n`;
         ultimaFecha = v.fecha;
     });
-    
-    let b = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
-    let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = "Reporte.csv"; l.click();
+
+    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", `Ventas_Bendito_Helado_${new Date().toLocaleDateString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 };
 
-window.limpiarHistorial = function() { if (confirm("¿Borrar todo?")) { localStorage.clear(); location.reload(); } };
+window.limpiarHistorial = function() {
+    let pass = prompt("ADMIN CLAVE:");
+    if (pass !== CLAVE_ADMIN) return alert("Error");
+    if (confirm("¿Borrar todo el historial de ventas?")) {
+        localStorage.removeItem("ventas");
+        localStorage.removeItem("gastos");
+        localStorage.removeItem("contadorProductos");
+        ventas = []; gastos = []; contadorProductos = {};
+        actualizarTop();
+        mostrarHistorialVentas();
+        alert("Historial borrado.");
+    }
+};
 
+/* Funciones auxiliares de cliente */
 window.buscarCliente = function() {
     let ced = document.getElementById("cliente-cedula").value;
     let extra = document.getElementById("datos-cliente-extra");
@@ -656,21 +676,23 @@ window.buscarCliente = function() {
         document.getElementById("cliente-nombre").value = clientes[ced].nombre || "";
         document.getElementById("cliente-correo").value = clientes[ced].correo || "";
         extra.style.display = "flex";
-    } else { 
+    } else {
         document.getElementById("cliente-nombre").value = "";
         document.getElementById("cliente-correo").value = "";
-        extra.style.display = (ced.length > 3) ? "flex" : "none"; 
+        extra.style.display = ced ? "flex" : "none";
     }
 };
 
 window.registrarCliente = function() {
     let ced = document.getElementById("cliente-cedula").value;
     let nom = document.getElementById("cliente-nombre").value;
-    if (!ced || !nom) return alert("Faltan datos");
-    clientes[ced] = { nombre: nom, correo: document.getElementById("cliente-correo").value };
+    let cor = document.getElementById("cliente-correo").value;
+    if(!ced || !nom) return alert("Ingresa al menos Cédula y Nombre");
+    clientes[ced] = { nombre: nom, correo: cor };
     localStorage.setItem("clientes", JSON.stringify(clientes));
-    alert("Registrado"); buscarCliente();
+    alert("Cliente guardado correctamente ✅");
 };
 </script>
+
 </body>
 </html>
