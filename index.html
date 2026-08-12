@@ -144,6 +144,12 @@
         <div class="stat-card" style="background: #ede7f6; border-color: #673ab7; grid-column: span 1;"><small>🥈 Top 2</small><div id="top2" style="font-weight:bold; font-size:0.8em;">N/A</div></div>
     </div>
 
+    <!-- ANALISIS DE HORAS PICO Y HORARIOS DE MAYO VENTAS -->
+    <div style="background: #e8eaf6; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #3f51b5;">
+        <h4 style="margin-top: 0; color: #1a237e;">⏰ ANÁLISIS DE VENTAS POR HORA (HOY)</h4>
+        <div id="analisis-horas" style="font-size: 0.85em; color: #333;">Sin ventas registradas hoy.</div>
+    </div>
+
     <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffb74d;">
         <h4 style="margin-top: 0; color: #e65100;">💸 REGISTRAR GASTO (Insumos)</h4>
         <input type="text" id="gasto-desc" placeholder="¿Qué compraste? (Ej: Servilletas)" style="width: 100%; padding: 8px; margin-bottom: 8px;">
@@ -422,12 +428,17 @@ window.procesarPago = function() {
 
     let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
     let ahora = new Date();
+    
+    // Obtener la hora exacta en formato hh:mm am/pm
+    let horaExacta = ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
     let venta = {
         fecha: ahora.toLocaleDateString(),
         año: ahora.getFullYear(),
         mes: ahora.getMonth() + 1,
         dia: ahora.getDate(),
-        hora: ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+        hora: horaExacta,
+        horaNum: ahora.getHours(), // Usado internamente para agrupar rangos
         detalle: ped.carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", ") + (ped.promoActiva ? ` (PROMO 3ro -${porcentaje}%)` : ""),
         total: totalActual, 
         pagoEfectivo: efe,
@@ -455,7 +466,7 @@ window.procesarPago = function() {
     localStorage.setItem("inventario", JSON.stringify(inventario));
     localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
 
-    alert(`Venta Pedido ${ped.id} Exitosa ✅`);
+    alert(`Venta Pedido ${ped.id} Exitosa ✅ (${horaExacta})`);
     
     ped.carrito = [];
     ped.promoActiva = false;
@@ -526,7 +537,9 @@ window.mostrarHistorialVentas = function() {
             desglose = `Mixto: Ef $${(v.pagoEfectivo||0).toLocaleString()} / Tr $${(v.pagoTransferencia||0).toLocaleString()}`;
         }
 
-        div.innerHTML = `<div><b>${v.recibo}</b> - $${v.total.toLocaleString()} (${desglose})</div>
+        let horaTexto = v.hora ? `(${v.hora})` : '';
+
+        div.innerHTML = `<div><b>${v.recibo}</b> <small style="color:#666;">${horaTexto}</small> - $${v.total.toLocaleString()} (${desglose})</div>
                          <button onclick="anularVenta(${idx})" style="background:red; color:white; border:none; padding:5px; border-radius:3px;">X</button>`;
         lista.appendChild(div);
     });
@@ -629,19 +642,67 @@ function actualizarTop() {
     let ord = Object.entries(contadorProductos).sort((a, b) => b[1] - a[1]);
     document.getElementById("top").innerText = ord[0] ? `${ord[0][0]} (${ord[0][1]})` : "N/A";
     document.getElementById("top2").innerText = ord[1] ? `${ord[1][0]} (${ord[1][1]})` : "N/A";
+
+    // Calcular análisis de horas del día
+    analizarHorasPico(hoyStr);
+}
+
+function analizarHorasPico(hoyStr) {
+    let divHoras = document.getElementById("analisis-horas");
+    let ventasHoy = ventas.filter(v => v.fecha === hoyStr);
+
+    if(ventasHoy.length === 0) {
+        divHoras.innerHTML = "Aún no hay ventas registradas hoy.";
+        return;
+    }
+
+    let franjas = {};
+
+    ventasHoy.forEach(v => {
+        let h = 0;
+        if (v.horaNum !== undefined) {
+            h = v.horaNum;
+        } else if (v.hora) {
+            let partes = v.hora.split(":");
+            h = parseInt(partes[0]) || 0;
+        }
+        
+        // Agrupar por bloques de 2 horas (ej: 12:00 - 14:00)
+        let rango = `${h}:00 - ${h+1}:59`;
+        franjas[rango] = (franjas[rango] || 0) + v.total;
+    });
+
+    let maxVenta = 0;
+    let horaPico = "";
+    let html = "<ul style='margin: 5px 0; padding-left: 20px;'>";
+
+    for(let r in franjas) {
+        if(franjas[r] > maxVenta) {
+            maxVenta = franjas[r];
+            horaPico = r;
+        }
+        html += `<li><b>${r}</b>: $${franjas[r].toLocaleString()}</li>`;
+    }
+    html += "</ul>";
+
+    if(horaPico !== "") {
+        html = `<div style="background:#c5cae9; padding:6px; border-radius:4px; font-weight:bold; color:#1a237e; margin-bottom:5px;">🔥 Rango Pico: ${horaPico} ($${maxVenta.toLocaleString()})</div>` + html;
+    }
+
+    divHoras.innerHTML = html;
 }
 
 window.toggleConfig = function() { let c = document.getElementById("config"); c.style.display = (c.style.display === "block") ? "none" : "block"; };
 
 window.exportarCSV = function() {
-    let csv = "FECHA;RECIBO;DETALLE;TOTAL;PAGO;EFECTIVO;TRANSFERENCIA\n";
+    let csv = "FECHA;HORA;RECIBO;DETALLE;TOTAL;PAGO;EFECTIVO;TRANSFERENCIA\n";
     let ultimaFecha = "";
     
     ventas.forEach(v => {
         if (ultimaFecha !== "" && v.fecha !== ultimaFecha) {
-            csv += ";;;;;;\n";
+            csv += ";;;;;;;\n";
         }
-        csv += `${v.fecha};${v.recibo};"${v.detalle}";${v.total};${v.metodo};${v.pagoEfectivo||0};${v.pagoTransferencia||0}\n`;
+        csv += `${v.fecha};${v.hora || ''};${v.recibo};"${v.detalle}";${v.total};${v.metodo};${v.pagoEfectivo||0};${v.pagoTransferencia||0}\n`;
         ultimaFecha = v.fecha;
     });
 
