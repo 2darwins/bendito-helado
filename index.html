@@ -15,9 +15,9 @@
     .tab-btn { background: #555; color: white; border: none; padding: 6px 10px; font-size: 0.75em; font-weight: bold; border-radius: 3px; cursor: pointer; white-space: nowrap; }
     .tab-btn.activa { background: #e91e63; color: white; }
 
-    .recibo-top { background: #fff; border-bottom: 2px solid #ddd; height: 80px; overflow-y: auto; padding: 5px 15px; font-family: monospace; font-size: 0.85em; }
+    .recibo-top { background: #fff; border-bottom: 2px solid #ddd; height: 95px; overflow-y: auto; padding: 5px 15px; font-family: monospace; font-size: 0.85em; }
     #carrito { list-style: none; padding: 0; margin: 0; }
-    #carrito li { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding: 2px 0; }
+    #carrito li { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #eee; padding: 4px 0; }
     .contenedor-productos { flex: 1; overflow-y: auto; padding: 10px; }
     #productos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .card { background: #add8e6; border: 1px solid #87ceeb; border-radius: 4px; padding: 3px; text-align: center; height: 105px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
@@ -43,9 +43,9 @@
     .stat-card { padding: 10px; border-radius: 8px; border-left: 5px solid; }
     
     /* Estilos del contenedor de la promoción */
-    .box-promo { border: 2px dashed #ccc; padding: 6px; border-radius: 6px; margin-bottom: 8px; background: #f5f5f5; display: flex; gap: 5px; align-items: center; }
+    .box-promo { border: 2px dashed #ccc; padding: 6px; border-radius: 6px; margin-bottom: 8px; background: #f5f5f5; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
     .box-promo.activa { background: #e8f5e9; border-color: #4caf50; }
-    .btn-promo-toggle { flex: 1; padding: 8px; border-radius: 4px; font-weight: bold; font-size: 0.85em; border: none; cursor: pointer; text-align: center; }
+    .btn-promo-toggle { flex: 1; padding: 8px; border-radius: 4px; font-weight: bold; font-size: 0.8em; border: none; cursor: pointer; text-align: center; min-width: 140px; }
   </style>
 </head>
 <body>
@@ -95,12 +95,21 @@
     <div>Cambio: $<span id="cambio" style="color: #2e7d32;">0</span></div>
   </div>
   
-  <!-- CONTENEDOR PROMO CON PORCENTAJE CONFIGURABLE -->
+  <!-- CONTENEDOR PROMO CON LOTE Y PORCENTAJE CONFIGURABLE -->
   <div id="box-promo" class="box-promo">
-    <button id="btn-promo-toggle" onclick="togglePromo()" class="btn-promo-toggle" style="background:#ddd; color:#555;">🔴 PROMO 3ro DTO. DESACTIVADA</button>
-    <div style="display:flex; align-items:center; gap:2px; font-size:0.8em; font-weight:bold;">
+    <button id="btn-promo-toggle" onclick="togglePromo()" class="btn-promo-toggle" style="background:#ddd; color:#555;">🔴 PROMO DESACTIVADA</button>
+    
+    <div style="display:flex; align-items:center; gap:3px; font-size:0.75em; font-weight:bold;">
+      <span>Lote:</span>
+      <select id="lote-promo" onchange="recalcularTotal()" style="padding: 3px; border-radius: 4px; border: 1px solid #ccc; font-size:0.9em; font-weight:bold;">
+        <option value="2">Cada 2</option>
+        <option value="3" selected>Cada 3</option>
+      </select>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:2px; font-size:0.75em; font-weight:bold;">
       <span>% Dto:</span>
-      <input type="number" id="porcentaje-promo" value="50" min="1" max="100" oninput="recalcularTotal()" style="width: 45px; padding: 4px; text-align: center; border-radius: 4px; border: 1px solid #ccc; font-weight:bold;">
+      <input type="number" id="porcentaje-promo" value="30" min="1" max="100" oninput="recalcularTotal()" style="width: 42px; padding: 3px; text-align: center; border-radius: 4px; border: 1px solid #ccc; font-weight:bold;">
     </div>
   </div>
   
@@ -237,18 +246,19 @@ function cambiarPedido(index) {
     let promo = pedidos[pedidoActivoIdx].promoActiva;
     let box = document.getElementById("box-promo");
     let btn = document.getElementById("btn-promo-toggle");
-    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
+    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 30;
+    let lote = parseInt(document.getElementById("lote-promo").value) || 3;
 
     if(promo) {
         box.className = "box-promo activa";
         btn.style.background = "#4caf50";
         btn.style.color = "white";
-        btn.innerText = `🍏 PROMO (3ro ${porcentaje}% DTO) ACTIVADA`;
+        btn.innerText = `🍏 PROMO (${lote}° -${porcentaje}%) ACTIVADA`;
     } else {
         box.className = "box-promo";
         btn.style.background = "#ddd";
         btn.style.color = "#555";
-        btn.innerText = "🔴 PROMO 3ro DTO. DESACTIVADA";
+        btn.innerText = "🔴 PROMO DESACTIVADA";
     }
 
     recalcularTotal();
@@ -306,7 +316,7 @@ function agregarAlCarrito(index) {
     if (item) { 
         item.cantidad++; 
     } else { 
-        car.push({ ...p, cantidad: 1 }); 
+        car.push({ ...p, cantidad: 1, descuentoInd: 0 }); 
     }
     renderTabsPedidos();
     recalcularTotal();
@@ -315,18 +325,39 @@ function agregarAlCarrito(index) {
 function actualizarCarrito() {
     let lista = document.getElementById("carrito");
     lista.innerHTML = "";
-    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
+    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 30;
+    let tamañoLote = parseInt(document.getElementById("lote-promo").value) || 3;
+    
     let car = pedidos[pedidoActivoIdx].carrito;
     let promo = pedidos[pedidoActivoIdx].promoActiva;
 
     car.forEach((p, index) => {
         let li = document.createElement("li");
-        let textoPromo = "";
-        if (promo && p.cantidad >= 3) {
-            let regalados = Math.floor(p.cantidad / 3);
-            textoPromo = ` <small style="color:green;font-weight:bold;">(${regalados}x 3ro -${porcentaje}%)</small>`;
+        if (p.descuentoInd === undefined) p.descuentoInd = 0;
+
+        let precioFinalUnitario = p.precio;
+        let textoDto = "";
+
+        // Tag de Descuento por Encuesta (Individual)
+        if (p.descuentoInd > 0) {
+            precioFinalUnitario = p.precio * ((100 - p.descuentoInd) / 100);
+            textoDto += ` <small style="color:#e65100;font-weight:bold;">(-${p.descuentoInd}%)</small>`;
         }
-        li.innerHTML = `<span>${p.cantidad} x $${p.precio.toLocaleString()}${textoPromo}</span> <span>${p.nombre}</span> <button onclick="eliminarDelCarrito(${index})" style="color:red; border:none; background:none; font-weight:bold;">X</button>`;
+
+        // Tag de Promo Global por Lote
+        if (promo && p.cantidad >= tamañoLote) {
+            let regalados = Math.floor(p.cantidad / tamañoLote);
+            textoDto += ` <small style="color:green;font-weight:bold;">(${regalados}x -${porcentaje}%)</small>`;
+        }
+
+        li.innerHTML = `
+            <span><b>${p.cantidad}x</b> $${Math.round(precioFinalUnitario).toLocaleString()}${textoDto}</span> 
+            <span style="font-size:0.9em;">${p.nombre}</span> 
+            <div style="display:flex; gap:3px; align-items:center;">
+                <button onclick="aplicarDtoItem(${index})" style="background:#ff9800; color:white; border:none; border-radius:3px; font-size:0.75em; padding:2px 5px; cursor:pointer;" title="Descuento por Encuesta">% Dto</button>
+                <button onclick="eliminarDelCarrito(${index})" style="color:red; border:none; background:none; font-weight:bold; cursor:pointer; font-size:1.1em;">X</button>
+            </div>
+        `;
         lista.appendChild(li);
     });
     
@@ -334,22 +365,46 @@ function actualizarCarrito() {
     document.getElementById("total").innerText = totalActual.toLocaleString();
 }
 
+// Función para aplicar % Dto individual por ítem (Encuesta)
+window.aplicarDtoItem = function(index) {
+    let car = pedidos[pedidoActivoIdx].carrito;
+    let dtoActual = car[index].descuentoInd || "30";
+    let dto = prompt(`Ingrese el % de descuento individual para ${car[index].nombre} (Ej: 30 para encuesta, o 0 para quitar):`, dtoActual);
+    
+    if (dto !== null) {
+        car[index].descuentoInd = parseFloat(dto) || 0;
+        recalcularTotal();
+    }
+};
+
 function calcularTotalPedido(ped) {
     let tot = 0;
-    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
-    let factorDescuento = (100 - porcentaje) / 100;
+    let porcentajePromo = parseFloat(document.getElementById("porcentaje-promo").value) || 30;
+    let tamañoLote = parseInt(document.getElementById("lote-promo").value) || 3;
+    let factorDescuentoPromo = (100 - porcentajePromo) / 100;
 
     ped.carrito.forEach(p => {
-        if (ped.promoActiva && p.cantidad >= 3) {
-            let gruposDeTres = Math.floor(p.cantidad / 3);
-            let sueltos = p.cantidad % 3;
-            let precioGrupo = (2 * p.precio) + (1 * p.precio * factorDescuento);
-            tot += (gruposDeTres * precioGrupo) + (sueltos * p.precio);
+        let precioBase = p.precio;
+        
+        // Aplica primero el descuento por encuesta individual si existe
+        if (p.descuentoInd > 0) {
+            precioBase = precioBase * ((100 - p.descuentoInd) / 100);
+        }
+
+        if (ped.promoActiva && p.cantidad >= tamañoLote) {
+            let grupos = Math.floor(p.cantidad / tamañoLote);
+            let sueltos = p.cantidad % tamañoLote;
+
+            // Precio del Lote (Ej: Si es Lote 3: 2 a precio normal + 1 con descuento)
+            let precioGrupo = ((tamañoLote - 1) * precioBase) + (precioBase * factorDescuentoPromo);
+
+            tot += (grupos * precioGrupo) + (sueltos * precioBase);
         } else {
-            tot += p.cantidad * p.precio;
+            tot += p.cantidad * precioBase;
         }
     });
-    return tot;
+
+    return Math.round(tot);
 }
 
 function recalcularTotal() {
@@ -366,7 +421,7 @@ window.eliminarDelCarrito = function(index) {
     }
     renderTabsPedidos();
     recalcularTotal();
-}
+};
 
 window.actualizarCambio = function() {
     let totalActual = calcularTotalPedido(pedidos[pedidoActivoIdx]);
@@ -426,11 +481,21 @@ window.procesarPago = function() {
         metodoRegistrado = "Transferencia";
     }
 
-    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 50;
+    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 30;
+    let tamañoLote = parseInt(document.getElementById("lote-promo").value) || 3;
     let ahora = new Date();
     
-    // Obtener la hora exacta en formato hh:mm am/pm
     let horaExacta = ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+    let detalleTexto = ped.carrito.map(p => {
+        let extra = [];
+        if (p.descuentoInd > 0) extra.push(`Dto Encuesta -${p.descuentoInd}%`);
+        return `${p.cantidad} ${p.nombre}` + (extra.length ? ` (${extra.join(', ')})` : '');
+    }).join(", ");
+
+    if (ped.promoActiva) {
+        detalleTexto += ` [PROMO Lote ${tamañoLote} -${porcentaje}%]`;
+    }
 
     let venta = {
         fecha: ahora.toLocaleDateString(),
@@ -438,8 +503,8 @@ window.procesarPago = function() {
         mes: ahora.getMonth() + 1,
         dia: ahora.getDate(),
         hora: horaExacta,
-        horaNum: ahora.getHours(), // Usado internamente para agrupar rangos
-        detalle: ped.carrito.map(p => `${p.cantidad} ${p.nombre}`).join(", ") + (ped.promoActiva ? ` (PROMO 3ro -${porcentaje}%)` : ""),
+        horaNum: ahora.getHours(),
+        detalle: detalleTexto,
         total: totalActual, 
         pagoEfectivo: efe,
         pagoTransferencia: tra,
@@ -488,7 +553,8 @@ window.registrarGasto = function() {
     gastos.push({ fecha: ahora.toLocaleDateString(), mes: ahora.getMonth() + 1, año: ahora.getFullYear(), descripcion: desc, valor: valor });
     localStorage.setItem("gastos", JSON.stringify(gastos));
     alert("Gasto guardado");
-    document.getElementById("gasto-desc").value = ""; document.getElementById("gasto-valor").value = "";
+    document.getElementById("gasto-desc").value = ""; 
+    document.getElementById("gasto-valor").value = "";
     actualizarTop();
 };
 
@@ -540,29 +606,33 @@ window.mostrarHistorialVentas = function() {
         let horaTexto = v.hora ? `(${v.hora})` : '';
 
         div.innerHTML = `<div><b>${v.recibo}</b> <small style="color:#666;">${horaTexto}</small> - $${v.total.toLocaleString()} (${desglose})</div>
-                         <button onclick="anularVenta(${idx})" style="background:red; color:white; border:none; padding:5px; border-radius:3px;">X</button>`;
+                         <button onclick="anularVenta(${idx})" style="background:red; color:white; border:none; padding:5px; border-radius:3px; cursor:pointer;">X</button>`;
         lista.appendChild(div);
     });
 };
 
 window.anularVenta = function(index) {
     let pass = prompt("ADMIN CLAVE:");
-    if (pass !== CLAVE_ADMIN) return alert("Error");
-    if (confirm("¿Anular venta?")) {
+    if (pass !== CLAVE_ADMIN) return alert("Error de clave");
+    if (confirm("¿Anular esta venta?")) {
         let v = ventas[index];
-        let detalleLimpio = v.detalle.replace(/\s\(PROMO 3ro -.*?\)/, "");
+        let detalleLimpio = v.detalle.replace(/\[.*?\]/g, "").replace(/\(.*?\)/g, "");
         let items = detalleLimpio.split(", ");
         items.forEach(item => {
-            let cant = parseInt(item.split(" ")[0]);
-            let nombreProd = item.substring(item.indexOf(" ") + 1);
-            for (let sabor in inventario) { if (nombreProd.toLowerCase().includes(sabor.toLowerCase())) inventario[sabor] += cant; }
+            let partes = item.trim().split(" ");
+            let cant = parseInt(partes[0]);
+            let nombreProd = partes.slice(1).join(" ");
+            for (let sabor in inventario) { 
+                if (nombreProd.toLowerCase().includes(sabor.toLowerCase())) inventario[sabor] += cant; 
+            }
             if (contadorProductos[nombreProd]) contadorProductos[nombreProd] -= cant;
         });
         ventas.splice(index, 1);
         localStorage.setItem("ventas", JSON.stringify(ventas));
         localStorage.setItem("inventario", JSON.stringify(inventario));
         localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
-        mostrarHistorialVentas(); actualizarTop();
+        mostrarHistorialVentas(); 
+        actualizarTop();
     }
 };
 
@@ -583,29 +653,52 @@ window.agregarProducto = function() {
     reader.readAsDataURL(img);
 };
 
-window.eliminarProductoMenu = function(i) { if(confirm("¿Borrar?")) { productos.splice(i, 1); localStorage.setItem("productos", JSON.stringify(productos)); mostrarProductos(); } };
+window.eliminarProductoMenu = function(i) { 
+    if(confirm("¿Borrar producto del menú?")) { 
+        productos.splice(i, 1); 
+        localStorage.setItem("productos", JSON.stringify(productos)); 
+        mostrarProductos(); 
+    } 
+};
 
-window.eliminarCajaSoloStock = function(sabor) { if(confirm("¿Borrar stock?")) { delete inventario[sabor]; localStorage.setItem("inventario", JSON.stringify(inventario)); actualizarVistaInventario(); } };
+window.eliminarCajaSoloStock = function(sabor) { 
+    if(confirm("¿Borrar control de stock para este sabor?")) { 
+        delete inventario[sabor]; 
+        localStorage.setItem("inventario", JSON.stringify(inventario)); 
+        actualizarVistaInventario(); 
+    } 
+};
 
 window.comprarCaja = function(sabor) {
-    let cant = prompt(`Cantidad para ${sabor}:`, "100");
-    if (cant) { inventario[sabor] = (inventario[sabor] || 0) + parseInt(cant); localStorage.setItem("inventario", JSON.stringify(inventario)); actualizarVistaInventario(); }
+    let cant = prompt(`Cantidad a cargar para ${sabor}:`, "100");
+    if (cant) { 
+        inventario[sabor] = (inventario[sabor] || 0) + parseInt(cant); 
+        localStorage.setItem("inventario", JSON.stringify(inventario)); 
+        actualizarVistaInventario(); 
+    }
 };
 
 function actualizarVistaInventario() {
     let divInv = document.getElementById("lista-inventario");
+    if(!divInv) return;
     divInv.innerHTML = "";
     for (let s in inventario) {
         let color = inventario[s] < 15 ? "red" : "black";
         divInv.innerHTML += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #ccc; padding:8px; font-size:0.9em; background:white; margin-bottom:2px;">
             <span style="color:${color}"><b>${s}</b>: ${inventario[s]} porc.</span>
-            <button onclick="comprarCaja('${s}')" style="background:#009688; color:white; border:none; border-radius:3px; padding:2px 8px;">+ Carga</button>
+            <button onclick="comprarCaja('${s}')" style="background:#009688; color:white; border:none; border-radius:3px; padding:2px 8px; cursor:pointer;">+ Carga</button>
         </div>`;
     }
-    divInv.innerHTML += `<button onclick="iniciarNuevoStock()" style="width:100%; margin-top:10px; padding:8px; background:#333; color:white; border:none; border-radius:5px; font-size:0.8em;">+ CONTROLAR OTRO SABOR</button>`;
+    divInv.innerHTML += `<button onclick="iniciarNuevoStock()" style="width:100%; margin-top:10px; padding:8px; background:#333; color:white; border:none; border-radius:5px; font-size:0.8em; cursor:pointer;">+ CONTROLAR OTRO SABOR</button>`;
 }
 
-window.iniciarNuevoStock = function() { let s = prompt("Sabor:"); if (s) { inventario[s] = 0; comprarCaja(s); } };
+window.iniciarNuevoStock = function() { 
+    let s = prompt("Nombre del sabor a controlar:"); 
+    if (s) { 
+        inventario[s] = 0; 
+        comprarCaja(s); 
+    } 
+};
 
 function actualizarTop() {
     let hoy = new Date();
@@ -634,126 +727,55 @@ function actualizarTop() {
     let tGasPas = 0;
     gastos.filter(g => g.mes === mPas && g.año === aPas).forEach(g => tGasPas += g.valor);
 
-    document.getElementById("reporte-hoy").innerText = "$" + tHoy.toLocaleString();
-    document.getElementById("reporte-ayer").innerText = "$" + tAyer.toLocaleString();
-    document.getElementById("reporte-mes").innerText = "$" + (tMes - tGasMes).toLocaleString();
-    document.getElementById("reporte-mes-pasado").innerText = "$" + (tPas - tGasPas).toLocaleString();
+    if(document.getElementById("reporte-hoy")) document.getElementById("reporte-hoy").innerText = "$" + tHoy.toLocaleString();
+    if(document.getElementById("reporte-ayer")) document.getElementById("reporte-ayer").innerText = "$" + tAyer.toLocaleString();
+    if(document.getElementById("reporte-mes")) document.getElementById("reporte-mes").innerText = "$" + (tMes - tGasMes).toLocaleString();
+    if(document.getElementById("reporte-mes-pasado")) document.getElementById("reporte-mes-pasado").innerText = "$" + (tPas - tGasPas).toLocaleString();
 
     let ord = Object.entries(contadorProductos).sort((a, b) => b[1] - a[1]);
-    document.getElementById("top").innerText = ord[0] ? `${ord[0][0]} (${ord[0][1]})` : "N/A";
-    document.getElementById("top2").innerText = ord[1] ? `${ord[1][0]} (${ord[1][1]})` : "N/A";
-
-    // Calcular análisis de horas del día
-    analizarHorasPico(hoyStr);
+    if(document.getElementById("top")) document.getElementById("top").innerText = ord[0] ? `${ord[0][0]} (${ord[0][1]})` : 'N/A';
+    if(document.getElementById("top2")) document.getElementById("top2").innerText = ord[1] ? `${ord[1][0]} (${ord[1][1]})` : 'N/A';
 }
 
-function analizarHorasPico(hoyStr) {
-    let divHoras = document.getElementById("analisis-horas");
-    let ventasHoy = ventas.filter(v => v.fecha === hoyStr);
-
-    if(ventasHoy.length === 0) {
-        divHoras.innerHTML = "Aún no hay ventas registradas hoy.";
-        return;
-    }
-
-    let franjas = {};
-
-    ventasHoy.forEach(v => {
-        let h = 0;
-        if (v.horaNum !== undefined) {
-            h = v.horaNum;
-        } else if (v.hora) {
-            let partes = v.hora.split(":");
-            h = parseInt(partes[0]) || 0;
+window.toggleConfig = function() {
+    let cfg = document.getElementById("config");
+    if(cfg.style.display === "block") {
+        cfg.style.display = "none";
+    } else {
+        let pass = prompt("CLAVE ADMINISTRACIÓN:");
+        if(pass === CLAVE_ADMIN) {
+            cfg.style.display = "block";
+            actualizarTop();
+            actualizarVistaInventario();
+        } else {
+            alert("Clave incorrecta");
         }
-        
-        // Agrupar por bloques de 2 horas (ej: 12:00 - 14:00)
-        let rango = `${h}:00 - ${h+1}:59`;
-        franjas[rango] = (franjas[rango] || 0) + v.total;
-    });
-
-    let maxVenta = 0;
-    let horaPico = "";
-    let html = "<ul style='margin: 5px 0; padding-left: 20px;'>";
-
-    for(let r in franjas) {
-        if(franjas[r] > maxVenta) {
-            maxVenta = franjas[r];
-            horaPico = r;
-        }
-        html += `<li><b>${r}</b>: $${franjas[r].toLocaleString()}</li>`;
     }
-    html += "</ul>";
-
-    if(horaPico !== "") {
-        html = `<div style="background:#c5cae9; padding:6px; border-radius:4px; font-weight:bold; color:#1a237e; margin-bottom:5px;">🔥 Rango Pico: ${horaPico} ($${maxVenta.toLocaleString()})</div>` + html;
-    }
-
-    divHoras.innerHTML = html;
-}
-
-window.toggleConfig = function() { let c = document.getElementById("config"); c.style.display = (c.style.display === "block") ? "none" : "block"; };
+};
 
 window.exportarCSV = function() {
-    let csv = "FECHA;HORA;RECIBO;DETALLE;TOTAL;PAGO;EFECTIVO;TRANSFERENCIA\n";
-    let ultimaFecha = "";
-    
+    let csv = "Recibo,Fecha,Hora,Detalle,Total,Metodo\n";
     ventas.forEach(v => {
-        if (ultimaFecha !== "" && v.fecha !== ultimaFecha) {
-            csv += ";;;;;;;\n";
-        }
-        csv += `${v.fecha};${v.hora || ''};${v.recibo};"${v.detalle}";${v.total};${v.metodo};${v.pagoEfectivo||0};${v.pagoTransferencia||0}\n`;
-        ultimaFecha = v.fecha;
+        csv += `"${v.recibo}","${v.fecha}","${v.hora||''}","${v.detalle}",${v.total},"${v.metodo}"\n`;
     });
-
-    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    let blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     let link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", `Ventas_Bendito_Helado_${new Date().toLocaleDateString()}.csv`);
-    document.body.appendChild(link);
+    link.download = `Ventas_Bendito_Helado.csv`;
     link.click();
-    document.body.removeChild(link);
 };
 
 window.limpiarHistorial = function() {
-    let pass = prompt("ADMIN CLAVE:");
-    if (pass !== CLAVE_ADMIN) return alert("Error");
-    if (confirm("¿Borrar todo el historial de ventas?")) {
-        localStorage.removeItem("ventas");
-        localStorage.removeItem("gastos");
-        localStorage.removeItem("contadorProductos");
-        ventas = []; gastos = []; contadorProductos = {};
-        actualizarTop();
-        mostrarHistorialVentas();
-        alert("Historial borrado.");
-    }
-};
-
-/* Funciones auxiliares de cliente */
-window.buscarCliente = function() {
-    let ced = document.getElementById("cliente-cedula").value;
-    let extra = document.getElementById("datos-cliente-extra");
-    if (clientes[ced]) {
-        document.getElementById("cliente-nombre").value = clientes[ced].nombre || "";
-        document.getElementById("cliente-correo").value = clientes[ced].correo || "";
-        extra.style.display = "flex";
+    let pass = prompt("CLAVE ADMIN PARA BORRAR TODO:");
+    if (pass === CLAVE_ADMIN) {
+        if (confirm("¿Seguro deseas borrar todas las ventas, gastos y conteos?")) {
+            localStorage.clear();
+            location.reload();
+        }
     } else {
-        document.getElementById("cliente-nombre").value = "";
-        document.getElementById("cliente-correo").value = "";
-        extra.style.display = ced ? "flex" : "none";
+        alert("Clave incorrecta");
     }
-};
-
-window.registrarCliente = function() {
-    let ced = document.getElementById("cliente-cedula").value;
-    let nom = document.getElementById("cliente-nombre").value;
-    let cor = document.getElementById("cliente-correo").value;
-    if(!ced || !nom) return alert("Ingresa al menos Cédula y Nombre");
-    clientes[ced] = { nombre: nom, correo: cor };
-    localStorage.setItem("clientes", JSON.stringify(clientes));
-    alert("Cliente guardado correctamente ✅");
 };
 </script>
-
 </body>
 </html>
