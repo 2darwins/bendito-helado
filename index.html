@@ -1,52 +1,52 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Bendito Helado POS</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    
-    body { font-family: Arial, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f9f9f9; }
-    header { background: #e91e63; color: white; padding: 8px; text-align: center; font-weight: bold; font-size: 1.1em; }
-    
-    /* Control de Pedidos Simultáneos / Cuentas */
-    .tabs-pedidos { display: flex; background: #333; overflow-x: auto; padding: 3px 5px; gap: 4px; }
-    .tab-btn { background: #555; color: white; border: none; padding: 6px 10px; font-size: 0.75em; font-weight: bold; border-radius: 3px; cursor: pointer; white-space: nowrap; }
-    .tab-btn.activa { background: #e91e63; color: white; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bendito Helado POS</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    
+    body { font-family: Arial, sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; background: #f9f9f9; }
+    header { background: #e91e63; color: white; padding: 8px; text-align: center; font-weight: bold; font-size: 1.1em; }
+    
+    /* Control de Pedidos Simultáneos / Cuentas */
+    .tabs-pedidos { display: flex; background: #333; overflow-x: auto; padding: 3px 5px; gap: 4px; }
+    .tab-btn { background: #555; color: white; border: none; padding: 6px 10px; font-size: 0.75em; font-weight: bold; border-radius: 3px; cursor: pointer; white-space: nowrap; }
+    .tab-btn.activa { background: #e91e63; color: white; }
 
-    .recibo-top { background: #fff; border-bottom: 2px solid #ddd; height: 95px; overflow-y: auto; padding: 5px 15px; font-family: monospace; font-size: 0.85em; }
-    #carrito { list-style: none; padding: 0; margin: 0; }
-    #carrito li { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #eee; padding: 4px 0; }
-    .contenedor-productos { flex: 1; overflow-y: auto; padding: 10px; }
-    #productos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    .card { background: #add8e6; border: 1px solid #87ceeb; border-radius: 4px; padding: 3px; text-align: center; height: 105px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
-    .card strong { font-size: 0.6em; line-height: 1; }
-    .card img { width: 100%; height: 45px; object-fit: cover; border-radius: 3px; }
-    .card span { font-size: 0.75em; }
-    .panel-pago { background: #fffde7; padding: 10px; border-top: 2px solid #ffe082; width: 100%; }
-    .total-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    
-    /* Ajustes para métodos de pago y botones de arriba */
-    .pago-metodos { display: flex; gap: 5px; margin-bottom: 8px; width: 100%; }
-    .pago-metodos button { flex: 1; min-width: 0; padding: 10px 4px; border: none; border-radius: 5px; color: white; font-weight: bold; font-size: 0.7em; cursor: pointer; text-align: center; }
+    .recibo-top { background: #fff; border-bottom: 2px solid #ddd; height: 95px; overflow-y: auto; padding: 5px 15px; font-family: monospace; font-size: 0.85em; }
+    #carrito { list-style: none; padding: 0; margin: 0; }
+    #carrito li { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #eee; padding: 4px 0; }
+    .contenedor-productos { flex: 1; overflow-y: auto; padding: 10px; }
+    #productos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .card { background: #add8e6; border: 1px solid #87ceeb; border-radius: 4px; padding: 3px; text-align: center; height: 105px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; }
+    .card strong { font-size: 0.6em; line-height: 1; }
+    .card img { width: 100%; height: 45px; object-fit: cover; border-radius: 3px; }
+    .card span { font-size: 0.75em; }
+    .panel-pago { background: #fffde7; padding: 10px; border-top: 2px solid #ffe082; width: 100%; }
+    .total-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    
+    /* Ajustes para métodos de pago y botones de arriba */
+    .pago-metodos { display: flex; gap: 5px; margin-bottom: 8px; width: 100%; }
+    .pago-metodos button { flex: 1; min-width: 0; padding: 10px 4px; border: none; border-radius: 5px; color: white; font-weight: bold; font-size: 0.7em; cursor: pointer; text-align: center; }
 
-    /* Ajuste responsivo de las casillas de Efectivo y Transferencia */
-    .inputs-pago { display: flex; gap: 8px; margin-bottom: 8px; width: 100%; }
-    .input-group { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-    .input-group label { font-size: 0.65em; font-weight: bold; margin-bottom: 2px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .input-group input { width: 100%; padding: 8px 4px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc; text-align: center; font-weight: bold; }
-    
-    .btn-cobrar { background: #e91e63; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; font-size: 1.2em; cursor: pointer; }
-    .config-btn { text-align: center; padding: 8px; background: #eee; font-size: 0.8em; cursor: pointer; }
-    #config { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding:20px; overflow-y:auto; }
-    .stat-card { padding: 10px; border-radius: 8px; border-left: 5px solid; }
-    
-    /* Estilos del contenedor de la promoción */
-    .box-promo { border: 2px dashed #ccc; padding: 6px; border-radius: 6px; margin-bottom: 8px; background: #f5f5f5; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
-    .box-promo.activa { background: #e8f5e9; border-color: #4caf50; }
-    .btn-promo-toggle { flex: 1; padding: 8px; border-radius: 4px; font-weight: bold; font-size: 0.8em; border: none; cursor: pointer; text-align: center; min-width: 140px; }
-  </style>
+    /* Ajuste responsivo de las casillas de Efectivo y Transferencia */
+    .inputs-pago { display: flex; gap: 8px; margin-bottom: 8px; width: 100%; }
+    .input-group { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .input-group label { font-size: 0.65em; font-weight: bold; margin-bottom: 2px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .input-group input { width: 100%; padding: 8px 4px; font-size: 1em; border-radius: 5px; border: 1px solid #ccc; text-align: center; font-weight: bold; }
+    
+    .btn-cobrar { background: #e91e63; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; font-size: 1.2em; cursor: pointer; }
+    .config-btn { text-align: center; padding: 8px; background: #eee; font-size: 0.8em; cursor: pointer; }
+    #config { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding:20px; overflow-y:auto; }
+    .stat-card { padding: 10px; border-radius: 8px; border-left: 5px solid; }
+    
+    /* Estilos del contenedor de la promoción */
+    .box-promo { border: 2px dashed #ccc; padding: 6px; border-radius: 6px; margin-bottom: 8px; background: #f5f5f5; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+    .box-promo.activa { background: #e8f5e9; border-color: #4caf50; }
+    .btn-promo-toggle { flex: 1; padding: 8px; border-radius: 4px; font-weight: bold; font-size: 0.8em; border: none; cursor: pointer; text-align: center; min-width: 140px; }
+  </style>
 </head>
 <body>
 
@@ -56,84 +56,596 @@
 <div class="tabs-pedidos" id="tabs-pedidos"></div>
 
 <div class="recibo-top">
-  <div style="display:flex; justify-content:space-between; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 3px;">
-    <span id="titulo-pedido-actual">PEDIDO 1:</span>
-    <button onclick="limpiarPedidoActual()" style="background:#ff5252; color:white; border:none; border-radius:3px; padding:1px 6px; font-size:0.8em; cursor:pointer;">Limpiar Cuenta</button>
-  </div>
-  <ul id="carrito"></ul>
+  <div style="display:flex; justify-content:space-between; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 3px;">
+    <span id="titulo-pedido-actual">PEDIDO 1:</span>
+    <button onclick="limpiarPedidoActual()" style="background:#ff5252; color:white; border:none; border-radius:3px; padding:1px 6px; font-size:0.8em; cursor:pointer;">Limpiar Cuenta</button>
+  </div>
+  <ul id="carrito"></ul>
 </div>
 
 <div class="contenedor-productos">
-  <div id="productos"></div>
+  <div id="productos"></div>
 </div>
 
 <div class="panel-pago">
-  <div class="total-area">
-    <span>TOTAL:</span>
-    <h2>$<span id="total">0</span></h2>
-  </div>
-  
-  <div class="pago-metodos">
-    <button onclick="pagoRapido('Efectivo')" style="background:#4caf50;">EFECTIVO</button>
-    <button onclick="pagoRapido('Transferencia')" style="background:#7030a0;">TRANSFERENCIA</button>
-    <button onclick="pagoRapido('Mixto')" style="background:#0288d1;">PAGO MIXTO</button>
-  </div>
+  <div class="total-area">
+    <span>TOTAL:</span>
+    <h2>$<span id="total">0</span></h2>
+  </div>
+  
+  <div class="pago-metodos">
+    <button onclick="pagoRapido('Efectivo')" style="background:#4caf50;">EFECTIVO</button>
+    <button onclick="pagoRapido('Transferencia')" style="background:#7030a0;">TRANSFERENCIA</button>
+    <button onclick="pagoRapido('Mixto')" style="background:#0288d1;">PAGO MIXTO</button>
+  </div>
 
-  <div class="inputs-pago">
-    <div class="input-group">
-      <label>💵 EFECTIVO RECIBIDO</label>
-      <input type="number" id="pago-efectivo" placeholder="0" oninput="actualizarCambio()">
-    </div>
-    <div class="input-group">
-      <label>📲 TRANSFERENCIA</label>
-      <input type="number" id="pago-transferencia" placeholder="0" oninput="actualizarCambio()">
-    </div>
-  </div>
+  <div class="inputs-pago">
+    <div class="input-group">
+      <label>💵 EFECTIVO RECIBIDO</label>
+      <input type="number" id="pago-efectivo" placeholder="0" oninput="actualizarCambio()">
+    </div>
+    <div class="input-group">
+      <label>📲 TRANSFERENCIA</label>
+      <input type="number" id="pago-transferencia" placeholder="0" oninput="actualizarCambio()">
+    </div>
+  </div>
 
-  <div style="display: flex; justify-content: space-between; font-size: 0.9em; font-weight: bold; margin-bottom: 8px; background: #fff; padding: 6px 10px; border-radius: 4px; border: 1px solid #e0e0e0;">
-    <div>Falta cubrir: $<span id="pendiente" style="color: #c62828;">0</span></div>
-    <div>Cambio: $<span id="cambio" style="color: #2e7d32;">0</span></div>
-  </div>
-  
-  <!-- CONTENEDOR PROMO CON LOTE Y PORCENTAJE CONFIGURABLE -->
-  <div id="box-promo" class="box-promo">
-    <button id="btn-promo-toggle" onclick="togglePromo()" class="btn-promo-toggle" style="background:#ddd; color:#555;">🔴 PROMO DESACTIVADA</button>
-    
-    <div style="display:flex; align-items:center; gap:3px; font-size:0.75em; font-weight:bold;">
-      <span>Lote:</span>
-      <select id="lote-promo" onchange="recalcularTotal()" style="padding: 3px; border-radius: 4px; border: 1px solid #ccc; font-size:0.9em; font-weight:bold;">
-        <option value="2">Cada 2</option>
-        <option value="3" selected>Cada 3</option>
-      </select>
-    </div>
+  <div style="display: flex; justify-content: space-between; font-size: 0.9em; font-weight: bold; margin-bottom: 8px; background: #fff; padding: 6px 10px; border-radius: 4px; border: 1px solid #e0e0e0;">
+    <div>Falta cubrir: $<span id="pendiente" style="color: #c62828;">0</span></div>
+    <div>Cambio: $<span id="cambio" style="color: #2e7d32;">0</span></div>
+  </div>
+  
+  <!-- CONTENEDOR PROMO CON LOTE Y PORCENTAJE CONFIGURABLE -->
+  <div id="box-promo" class="box-promo">
+    <button id="btn-promo-toggle" onclick="togglePromo()" class="btn-promo-toggle" style="background:#ddd; color:#555;">🔴 PROMO DESACTIVADA</button>
+    
+    <div style="display:flex; align-items:center; gap:3px; font-size:0.75em; font-weight:bold;">
+      <span>Lote:</span>
+      <select id="lote-promo" onchange="recalcularTotal()" style="padding: 3px; border-radius: 4px; border: 1px solid #ccc; font-size:0.9em; font-weight:bold;">
+        <option value="2">Cada 2</option>
+        <option value="3" selected>Cada 3</option>
+      </select>
+    </div>
 
-    <div style="display:flex; align-items:center; gap:2px; font-size:0.75em; font-weight:bold;">
-      <span>% Dto:</span>
-      <input type="number" id="porcentaje-promo" value="30" min="1" max="100" oninput="recalcularTotal()" style="width: 42px; padding: 3px; text-align: center; border-radius: 4px; border: 1px solid #ccc; font-weight:bold;">
-    </div>
-  </div>
-  
-  <button onclick="procesarPago()" class="btn-cobrar">FINALIZAR VENTA</button>
+    <div style="display:flex; align-items:center; gap:2px; font-size:0.75em; font-weight:bold;">
+      <span>% Dto:</span>
+      <input type="number" id="porcentaje-promo" value="30" min="1" max="100" oninput="recalcularTotal()" style="width: 42px; padding: 3px; text-align: center; border-radius: 4px; border: 1px solid #ccc; font-weight:bold;">
+    </div>
+  </div>
+  
+  <button onclick="procesarPago()" class="btn-cobrar">FINALIZAR VENTA</button>
 </div>
 
 <!-- BLOQUE DE CLIENTES -->
 <div style="background: #e1f5fe; padding: 10px; border-top: 1px solid #b3e5fc; border-bottom: 1px solid #b3e5fc; display: flex; flex-direction: column; gap: 5px;">
-  <div style="display: flex; gap: 5px;">
-    <input type="number" id="cliente-cedula" placeholder="Cédula (Cliente Frecuente)" oninput="buscarCliente()" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
-    <button onclick="registrarCliente()" style="background: #0288d1; color: white; border: none; border-radius: 4px; padding: 0 12px; font-weight: bold; cursor: pointer;">💾 Guardar Cliente</button>
-  </div>
-  <div id="datos-cliente-extra" style="display: none; gap: 5px;">
-    <input type="text" id="cliente-nombre" placeholder="Nombre completo" style="flex: 1; padding: 6px; font-size: 0.85em; border: 1px solid #ccc; border-radius: 4px;">
-    <input type="email" id="cliente-correo" placeholder="Correo electrónico" style="flex: 1; padding: 6px; font-size: 0.85em; border: 1px solid #ccc; border-radius: 4px;">
-  </div>
+  <div style="display: flex; gap: 5px;">
+    <input type="number" id="cliente-cedula" placeholder="Cédula (Cliente Frecuente)" oninput="buscarCliente()" style="flex: 1; padding: 8px; border-radius: 4px; border: 1px solid #90caf9;">
+    <button onclick="registrarCliente()" style="background: #0288d1; color: white; border: none; border-radius: 4px; padding: 0 12px; font-weight: bold; cursor: pointer;">💾 Guardar Cliente</button>
+  </div>
+  <div id="datos-cliente-extra" style="display: none; gap: 5px;">
+    <input type="text" id="cliente-nombre" placeholder="Nombre completo" style="flex: 1; padding: 6px; font-size: 0.85em; border: 1px solid #ccc; border-radius: 4px;">
+    <input type="email" id="cliente-correo" placeholder="Correo electrónico" style="flex: 1; padding: 6px; font-size: 0.85em; border: 1px solid #ccc; border-radius: 4px;">
+  </div>
 </div>
 
 <div class="config-btn" onclick="toggleConfig()">⚙️ ADMINISTRACIÓN</div>
 
 <div id="config">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e91e63; margin-bottom: 15px; padding-bottom: 10px;">
-        <h2 style="margin: 0; color: #e91e63;">ADMINISTRACIÓN</h2>
-        <button onclick="toggleConfig()" style="background: #333; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">X</button>
-    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e91e63; margin-bottom: 15px; padding-bottom: 10px;">
+        <h2 style="margin: 0; color: #e91e63;">ADMINISTRACIÓN</h2>
+        <button onclick="toggleConfig()" style="background: #333; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">X</button>
+    </div>
 
-    <d
+    <div style="background: #f1f8e9; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #8bc34a;">
+        <label style="font-weight: bold; color: #33691e; display: block; margin-bottom: 5px;">💰 BASE DE INICIO (Vueltas):</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="number" id="base-diaria" placeholder="Ej: 15000" style="flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-weight: bold;">
+            <button onclick="guardarBase()" style="background: #4caf50; color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold;">FIJAR BASE</button>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+        <div class="stat-card" style="background: #e3f2fd; border-color: #2196f3;"><small>Hoy</small><div id="reporte-hoy" style="font-weight:bold;">$0</div></div>
+        <div class="stat-card" style="background: #fff9c4; border-color: #fbc02d;"><small>Ayer</small><div id="reporte-ayer" style="font-weight:bold;">$0</div></div>
+        <div class="stat-card" style="background: #f1f8e9; border-color: #4caf50;"><small>Mes (Neto)</small><div id="reporte-mes" style="font-weight:bold;">$0</div></div>
+        <div class="stat-card" style="background: #fff3e0; border-color: #ff9800;"><small>Mes Pasado</small><div id="reporte-mes-pasado" style="font-weight:bold;">$0</div></div>
+        <div class="stat-card" style="background: #f3e5f5; border-color: #9c27b0; grid-column: span 1;"><small>🏆 Top 1</small><div id="top" style="font-weight:bold; font-size:0.8em;">N/A</div></div>
+        <div class="stat-card" style="background: #ede7f6; border-color: #673ab7; grid-column: span 1;"><small>🥈 Top 2</small><div id="top2" style="font-weight:bold; font-size:0.8em;">N/A</div></div>
+    </div>
+
+    <!-- ANALISIS DE HORAS PICO Y HORARIOS DE MAYORES VENTAS -->
+    <div style="background: #e8eaf6; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #3f51b5;">
+        <h4 style="margin-top: 0; color: #1a237e;">⏰ ANÁLISIS DE VENTAS POR HORA (HOY)</h4>
+        <div id="analisis-horas" style="font-size: 0.85em; color: #333;">Sin ventas registradas hoy.</div>
+    </div>
+
+    <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffb74d;">
+        <h4 style="margin-top: 0; color: #e65100;">💸 REGISTRAR GASTO (Insumos)</h4>
+        <input type="text" id="gasto-desc" placeholder="¿Qué compraste? (Ej: Servilletas)" style="width: 100%; padding: 8px; margin-bottom: 8px;">
+        <input type="number" id="gasto-valor" placeholder="Valor $" style="width: 100%; padding: 8px; margin-bottom: 8px;">
+        <button onclick="registrarGasto()" style="width: 100%; padding: 10px; background: #ff9800; color: white; border: none; border-radius: 5px; font-weight: bold;">GUARDAR GASTO</button>
+    </div>
+
+    <div style="background: #e0f2f1; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #4db6ac;">
+        <h4 style="margin-top: 0; color: #00695c;">📊 STOCK DE CAJAS (PORCIONES)</h4>
+        <div id="lista-inventario" style="margin-bottom: 10px;"></div>
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="inv-nombre" placeholder="Sabor / Producto" style="flex:1; padding:6px;">
+            <input type="number" id="inv-cant" placeholder="Porciones" style="width:80px; padding:6px;">
+            <button onclick="guardarStockInventario()" style="background:#00695c; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:bold;">Guardar</button>
+        </div>
+    </div>
+
+    <div style="background: #eee; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <h4 style="margin-top: 0;">+ AGREGAR PRODUCTO</h4>
+        <input type="text" id="nombre" placeholder="Nombre" style="width: 100%; padding: 8px; margin-bottom: 8px;">
+        <input type="number" id="precio" placeholder="Precio" style="width: 100%; padding: 8px; margin-bottom: 8px;">
+        <input type="file" id="imagen" accept="image/*" style="margin-bottom: 10px; width: 100%;">
+        <button onclick="agregarProducto()" style="width: 100%; padding: 10px; background: #e91e63; color: white; border: none; border-radius: 5px; font-weight: bold;">GUARDAR</button>
+    </div>
+
+    <div style="background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px;">
+        <h4 style="margin-top:0; border-bottom: 2px solid #ff5252; padding-bottom: 5px;">ELIMINAR DEL MENÚ / STOCK</h4>
+        <div id="lista-eliminar" style="display: grid; grid-template-columns: 1fr; gap: 8px;"></div>
+    </div>
+
+    <div style="background: #fff5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffcdd2;">
+        <h4 style="margin-top: 0; color: #c62828;">❌ CIERRE Y ANULACIONES</h4>
+        <button onclick="mostrarHistorialVentas()" style="width: 100%; padding: 8px; background: #576574; color: white; border: none; border-radius: 5px; font-size: 0.8em; margin-bottom: 10px;">REVISAR CUADRE Y VENTAS</button>
+        <div id="historial-ventas-lista" style="max-height: 250px; overflow-y: auto;"></div>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+        <button onclick="exportarCSV()" style="flex: 1; background: #2e7d32; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer;">EXCEL</button>
+        <button onclick="limpiarHistorial()" style="flex: 1; background: #c62828; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer;">BORRAR TODO</button>
+    </div>
+</div>
+
+<script>
+const CLAVE_ADMIN = "1234";
+
+let productos = JSON.parse(localStorage.getItem("productos")) || [];
+let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+let gastos = JSON.parse(localStorage.getItem("gastos")) || []; 
+let clientes = JSON.parse(localStorage.getItem("clientes")) || {};
+let contadorProductos = JSON.parse(localStorage.getItem("contadorProductos")) || {};
+let inventario = JSON.parse(localStorage.getItem("inventario")) || {};
+let proximoRecibo = JSON.parse(localStorage.getItem("proximoRecibo")) || 1; 
+let baseCaja = JSON.parse(localStorage.getItem("baseCaja")) || 0; 
+
+let pedidos = [
+    { id: 1, carrito: [], promoActiva: false },
+    { id: 2, carrito: [], promoActiva: false },
+    { id: 3, carrito: [], promoActiva: false },
+    { id: 4, carrito: [], promoActiva: false }
+];
+let pedidoActivoIdx = 0;
+
+window.onload = function() {
+    document.getElementById("base-diaria").value = baseCaja;
+    renderTabsPedidos();
+    mostrarProductos();
+    actualizarTop();
+    actualizarVistaInventario();
+    recalcularTotal();
+};
+
+function renderTabsPedidos() {
+    let tabs = document.getElementById("tabs-pedidos");
+    tabs.innerHTML = "";
+    pedidos.forEach((p, index) => {
+        let totalItems = p.carrito.reduce((sum, item) => sum + item.cantidad, 0);
+        let btn = document.createElement("button");
+        btn.className = "tab-btn " + (index === pedidoActivoIdx ? "activa" : "");
+        btn.innerText = `🛒 Pedido ${p.id} ${totalItems > 0 ? '(' + totalItems + ')' : ''}`;
+        btn.onclick = () => cambiarPedido(index);
+        tabs.appendChild(btn);
+    });
+    document.getElementById("titulo-pedido-actual").innerText = `PEDIDO ${pedidos[pedidoActivoIdx].id}:`;
+}
+
+function cambiarPedido(index) {
+    pedidoActivoIdx = index;
+    renderTabsPedidos();
+    
+    let promo = pedidos[pedidoActivoIdx].promoActiva;
+    let box = document.getElementById("box-promo");
+    let btn = document.getElementById("btn-promo-toggle");
+    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 30;
+    let lote = parseInt(document.getElementById("lote-promo").value) || 3;
+
+    if(promo) {
+        box.className = "box-promo activa";
+        btn.style.background = "#4caf50";
+        btn.style.color = "white";
+        btn.innerText = `🍏 PROMO (${lote}° -${porcentaje}%) ACTIVADA`;
+    } else {
+        box.className = "box-promo";
+        btn.style.background = "#ddd";
+        btn.style.color = "#555";
+        btn.innerText = "🔴 PROMO DESACTIVADA";
+    }
+
+    recalcularTotal();
+}
+
+window.limpiarPedidoActual = function() {
+    if(pedidos[pedidoActivoIdx].carrito.length === 0) return;
+    if(confirm(`¿Vaciar la cuenta del Pedido ${pedidos[pedidoActivoIdx].id}?`)) {
+        pedidos[pedidoActivoIdx].carrito = [];
+        pedidos[pedidoActivoIdx].promoActiva = false;
+        cambiarPedido(pedidoActivoIdx);
+    }
+};
+
+window.togglePromo = function() {
+    pedidos[pedidoActivoIdx].promoActiva = !pedidos[pedidoActivoIdx].promoActiva;
+    cambiarPedido(pedidoActivoIdx);
+};
+
+window.guardarBase = function() {
+    baseCaja = parseFloat(document.getElementById("base-diaria").value) || 0;
+    localStorage.setItem("baseCaja", JSON.stringify(baseCaja));
+    alert("Base de caja fijada en $" + baseCaja.toLocaleString());
+};
+
+function mostrarProductos() {
+    let contenedor = document.getElementById("productos");
+    let listaEliminar = document.getElementById("lista-eliminar");
+    if (!contenedor) return;
+    contenedor.innerHTML = "";
+    if (listaEliminar) listaEliminar.innerHTML = "";
+
+    productos.forEach((p, index) => {
+        let div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `<strong>${p.nombre}</strong><img src="${p.imagen}"><span>$${p.precio.toLocaleString()}</span>`;
+        div.onclick = () => agregarAlCarrito(index);
+        contenedor.appendChild(div);
+
+        if (listaEliminar) {
+            let item = document.createElement("div");
+            item.style = "display: flex; align-items: center; background: #f9f9f9; padding: 8px; border-radius: 5px; border: 1px solid #eee; gap: 5px;";
+            item.innerHTML = `<span style="flex: 1; font-size: 0.8em; font-weight:bold;">${p.nombre}</span>
+                              <button onclick="eliminarProductoMenu(${index})" style="background:#ff5252; color:white; border:none; border-radius:3px; padding: 5px 10px; cursor:pointer;">🗑️</button>`;
+            listaEliminar.appendChild(item);
+        }
+    });
+}
+
+function agregarAlCarrito(index) {
+    let p = productos[index];
+    let car = pedidos[pedidoActivoIdx].carrito;
+    let item = car.find(i => i.nombre === p.nombre);
+    if (item) { 
+        item.cantidad++; 
+    } else { 
+        car.push({ ...p, cantidad: 1, descuentoInd: 0 }); 
+    }
+    renderTabsPedidos();
+    recalcularTotal();
+}
+
+function actualizarCarrito() {
+    let lista = document.getElementById("carrito");
+    lista.innerHTML = "";
+    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 30;
+    let tamañoLote = parseInt(document.getElementById("lote-promo").value) || 3;
+    
+    let car = pedidos[pedidoActivoIdx].carrito;
+    let promo = pedidos[pedidoActivoIdx].promoActiva;
+
+    car.forEach((p, index) => {
+        let li = document.createElement("li");
+        if (p.descuentoInd === undefined) p.descuentoInd = 0;
+
+        let precioFinalUnitario = p.precio;
+        let textoDto = "";
+
+        // Tag de Descuento por Encuesta (Individual)
+        if (p.descuentoInd > 0) {
+            precioFinalUnitario = p.precio * ((100 - p.descuentoInd) / 100);
+            textoDto += ` <small style="color:#e65100;font-weight:bold;">(-${p.descuentoInd}%)</small>`;
+        }
+
+        // Tag de Promo Global por Lote
+        if (promo && p.cantidad >= tamañoLote) {
+            let regalados = Math.floor(p.cantidad / tamañoLote);
+            textoDto += ` <small style="color:green;font-weight:bold;">(${regalados}x -${porcentaje}%)</small>`;
+        }
+
+        li.innerHTML = `
+            <span><b>${p.cantidad}x</b> $${Math.round(precioFinalUnitario).toLocaleString()}${textoDto}</span> 
+            <span style="font-size:0.9em;">${p.nombre}</span> 
+            <div style="display:flex; gap:3px; align-items:center;">
+                <button onclick="aplicarDtoItem(${index})" style="background:#ff9800; color:white; border:none; border-radius:3px; font-size:0.75em; padding:2px 5px; cursor:pointer;" title="Descuento por Encuesta">% Dto</button>
+                <button onclick="eliminarDelCarrito(${index})" style="color:red; border:none; background:none; font-weight:bold; cursor:pointer; font-size:1.1em;">X</button>
+            </div>
+        `;
+        lista.appendChild(li);
+    });
+    
+    let totalActual = calcularTotalPedido(pedidos[pedidoActivoIdx]);
+    document.getElementById("total").innerText = totalActual.toLocaleString();
+}
+
+// Función para aplicar % Dto individual por ítem (Encuesta)
+window.aplicarDtoItem = function(index) {
+    let car = pedidos[pedidoActivoIdx].carrito;
+    let dtoActual = car[index].descuentoInd || "30";
+    let dto = prompt(`Ingrese el % de descuento individual para ${car[index].nombre} (Ej: 30 para encuesta, o 0 para quitar):`, dtoActual);
+    
+    if (dto !== null) {
+        car[index].descuentoInd = parseFloat(dto) || 0;
+        recalcularTotal();
+    }
+};
+
+function calcularTotalPedido(ped) {
+    let tot = 0;
+    let porcentajePromo = parseFloat(document.getElementById("porcentaje-promo").value) || 30;
+    let tamañoLote = parseInt(document.getElementById("lote-promo").value) || 3;
+    let factorDescuentoPromo = (100 - porcentajePromo) / 100;
+
+    ped.carrito.forEach(p => {
+        let precioBase = p.precio;
+        
+        // Aplica primero el descuento por encuesta individual si existe
+        if (p.descuentoInd > 0) {
+            precioBase = precioBase * ((100 - p.descuentoInd) / 100);
+        }
+
+        if (ped.promoActiva && p.cantidad >= tamañoLote) {
+            let grupos = Math.floor(p.cantidad / tamañoLote);
+            let sueltos = p.cantidad % tamañoLote;
+
+            // Precio del Lote (Ej: Si es Lote 3: 2 a precio normal + 1 con descuento)
+            let precioGrupo = ((tamañoLote - 1) * precioBase) + (precioBase * factorDescuentoPromo);
+
+            tot += (grupos * precioGrupo) + (sueltos * precioBase);
+        } else {
+            tot += p.cantidad * precioBase;
+        }
+    });
+
+    return Math.round(tot);
+}
+
+function recalcularTotal() {
+    actualizarCarrito();
+    actualizarCambio();
+}
+
+window.eliminarDelCarrito = function(index) {
+    let car = pedidos[pedidoActivoIdx].carrito;
+    if (car[index].cantidad > 1) { 
+        car[index].cantidad--; 
+    } else { 
+        car.splice(index, 1); 
+    }
+    renderTabsPedidos();
+    recalcularTotal();
+};
+
+window.actualizarCambio = function() {
+    let totalActual = calcularTotalPedido(pedidos[pedidoActivoIdx]);
+    let efe = parseFloat(document.getElementById("pago-efectivo").value) || 0;
+    let tra = parseFloat(document.getElementById("pago-transferencia").value) || 0;
+    let totalPagado = efe + tra;
+
+    let cambio = 0;
+    let pendiente = 0;
+
+    if (totalPagado >= totalActual) {
+        cambio = totalPagado - totalActual;
+        pendiente = 0;
+    } else {
+        cambio = 0;
+        pendiente = totalActual - totalPagado;
+    }
+
+    document.getElementById("cambio").innerText = cambio.toLocaleString();
+    document.getElementById("pendiente").innerText = pendiente.toLocaleString();
+};
+
+window.pagoRapido = function(metodo) {
+    let totalActual = calcularTotalPedido(pedidos[pedidoActivoIdx]);
+    let inEfe = document.getElementById("pago-efectivo");
+    let inTra = document.getElementById("pago-transferencia");
+
+    if (metodo === 'Efectivo') {
+        inEfe.value = totalActual;
+        inTra.value = "";
+    } else if (metodo === 'Transferencia') {
+        inEfe.value = "";
+        inTra.value = totalActual;
+    } else if (metodo === 'Mixto') {
+        inEfe.value = Math.round(totalActual / 2);
+        inTra.value = totalActual - parseFloat(inEfe.value);
+    }
+    actualizarCambio();
+};
+
+window.procesarPago = function() {
+    let ped = pedidos[pedidoActivoIdx];
+    let totalActual = calcularTotalPedido(ped);
+    
+    if (totalActual === 0) return;
+
+    let efe = parseFloat(document.getElementById("pago-efectivo").value) || 0;
+    let tra = parseFloat(document.getElementById("pago-transferencia").value) || 0;
+    let totalPagado = efe + tra;
+
+    if (totalPagado < totalActual) return alert("El pago total es insuficiente para cubrir la cuenta.");
+
+    let metodoRegistrado = "Efectivo";
+    if (efe > 0 && tra > 0) {
+        metodoRegistrado = "Mixto";
+    } else if (tra > 0) {
+        metodoRegistrado = "Transferencia";
+    }
+
+    let porcentaje = parseFloat(document.getElementById("porcentaje-promo").value) || 30;
+    let tamañoLote = parseInt(document.getElementById("lote-promo").value) || 3;
+    let ahora = new Date();
+    
+    let horaExacta = ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+    let detalleTexto = ped.carrito.map(p => {
+        let extra = [];
+        if (p.descuentoInd > 0) extra.push(`Dto Encuesta -${p.descuentoInd}%`);
+        return `${p.cantidad} ${p.nombre}` + (extra.length ? ` (${extra.join(', ')})` : '');
+    }).join(", ");
+
+    if (ped.promoActiva) {
+        detalleTexto += ` [PROMO Lote ${tamañoLote} -${porcentaje}%]`;
+    }
+
+    let cedulaCliente = document.getElementById("cliente-cedula").value;
+
+    let venta = {
+        fecha: ahora.toLocaleDateString(),
+        año: ahora.getFullYear(),
+        mes: ahora.getMonth() + 1,
+        dia: ahora.getDate(),
+        hora: horaExacta,
+        horaNum: ahora.getHours(),
+        detalle: detalleTexto,
+        total: totalActual, 
+        pagoEfectivo: efe,
+        pagoTransferencia: tra,
+        recibo: "BH-" + String(proximoRecibo).padStart(2, '0'), 
+        metodo: metodoRegistrado,
+        cliente: cedulaCliente || "Anónimo"
+    };
+
+    ventas.push(venta);
+    proximoRecibo++;
+    localStorage.setItem("proximoRecibo", JSON.stringify(proximoRecibo));
+
+    ped.carrito.forEach(p => { 
+        contadorProductos[p.nombre] = (contadorProductos[p.nombre] || 0) + p.cantidad;
+        for (let sabor in inventario) {
+            if (p.nombre.toLowerCase().includes(sabor.toLowerCase())) {
+                if (inventario[sabor] > 0) {
+                    inventario[sabor] -= p.cantidad; 
+                }
+            }
+        }
+    });
+
+    localStorage.setItem("ventas", JSON.stringify(ventas));
+    localStorage.setItem("inventario", JSON.stringify(inventario));
+    localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
+
+    alert(`Venta Pedido ${ped.id} Exitosa ✅ (${horaExacta})`);
+    
+    ped.carrito = [];
+    ped.promoActiva = false;
+
+    document.getElementById("pago-efectivo").value = "";
+    document.getElementById("pago-transferencia").value = "";
+    document.getElementById("cliente-cedula").value = "";
+    document.getElementById("datos-cliente-extra").style.display = "none";
+
+    renderTabsPedidos();
+    cambiarPedido(pedidoActivoIdx);
+    actualizarTop();
+    actualizarVistaInventario();
+};
+
+window.registrarGasto = function() {
+    let desc = document.getElementById("gasto-desc").value;
+    let valor = parseFloat(document.getElementById("gasto-valor").value);
+    if(!desc || !valor) return alert("Faltan datos");
+    let ahora = new Date();
+    gastos.push({ fecha: ahora.toLocaleDateString(), mes: ahora.getMonth() + 1, año: ahora.getFullYear(), descripcion: desc, valor: valor });
+    localStorage.setItem("gastos", JSON.stringify(gastos));
+    alert("Gasto guardado");
+    document.getElementById("gasto-desc").value = ""; 
+    document.getElementById("gasto-valor").value = "";
+    actualizarTop();
+};
+
+window.mostrarHistorialVentas = function() {
+    let lista = document.getElementById("historial-ventas-lista");
+    lista.innerHTML = "";
+    let hoyStr = new Date().toLocaleDateString();
+    let vHoy = ventas.filter(v => v.fecha === hoyStr);
+    let gHoy = gastos.filter(g => g.fecha === hoyStr);
+    
+    let tEfe = 0, tTra = 0, tGas = 0;
+    vHoy.forEach(v => {
+        if (v.pagoEfectivo !== undefined || v.pagoTransferencia !== undefined) {
+            tEfe += (v.pagoEfectivo || 0);
+            tTra += (v.pagoTransferencia || 0);
+        } else {
+            if (v.metodo === 'Efectivo') tEfe += v.total;
+            else tTra += v.total;
+        }
+    });
+    gHoy.forEach(g => tGas += g.valor);
+
+    let fisicoEnCaja = (baseCaja + tEfe - tGas);
+
+    let res = document.createElement("div");
+    res.style = "background:#222; color:white; padding:15px; border-radius:8px; margin-bottom:15px; font-size:0.85em; border-left: 5px solid #4caf50;";
+    res.innerHTML = `
+        <center><b>📊 CUADRE DE CAJA (HOY)</b></center><hr>
+        🏠 Base de Inicio: $${baseCaja.toLocaleString()}<br>
+        🍦 Ventas Efectivo: $${tEfe.toLocaleString()}<br>
+        💸 Gastos (Insumos): -$${tGas.toLocaleString()}<hr>
+        <div style="font-size: 1.1em; color: #afffaf;"><b>EFECTIVO FÍSICO: $${fisicoEnCaja.toLocaleString()}</b></div>
+        <small style="opacity: 0.8;">(Base + Efectivo - Gastos)</small><hr>
+        📲 Transferencias: $${tTra.toLocaleString()}<br>
+        <b>💰 VENTA TOTAL DÍA: $${(tEfe + tTra).toLocaleString()}</b>
+    `;
+    lista.appendChild(res);
+
+    [...ventas].reverse().slice(0, 10).forEach((v, indexRev) => {
+        let idx = ventas.length - 1 - indexRev;
+        let div = document.createElement("div");
+        div.style = "background:white; padding:8px; margin-bottom:5px; border-radius:5px; border:1px solid #ddd; display:flex; justify-content:space-between; font-size:0.75em;";
+        
+        let desglose = v.metodo;
+        if (v.metodo === "Mixto") {
+            desglose = `Mixto: Ef $${(v.pagoEfectivo||0).toLocaleString()} / Tr $${(v.pagoTransferencia||0).toLocaleString()}`;
+        }
+
+        let horaTexto = v.hora ? `(${v.hora})` : '';
+
+        div.innerHTML = `<div><b>${v.recibo}</b> <small style="color:#666;">${horaTexto}</small> - $${v.total.toLocaleString()} (${desglose})</div>
+                         <button onclick="anularVenta(${idx})" style="background:red; color:white; border:none; padding:5px; border-radius:3px; cursor:pointer;">X</button>`;
+        lista.appendChild(div);
+    });
+};
+
+window.anularVenta = function(index) {
+    let pass = prompt("ADMIN CLAVE:");
+    if (pass !== CLAVE_ADMIN) return alert("Error de clave");
+    if (confirm("¿Anular esta venta?")) {
+        let v = ventas[index];
+        let detalleLimpio = v.detalle.replace(/\[.*?\]/g, "").replace(/\(.*?\)/g, "");
+        let items = detalleLimpio.split(", ");
+        items.forEach(item => {
+            let partes = item.trim().split(" ");
+            let cant = parseInt(partes[0]);
+            let nombreProd = partes.slice(1).join(" ");
+            for (let sabor in inventario) { 
+                if (nombreProd.toLowerCase().includes(sabor.toLowerCase())) inventario[sabor] += cant; 
+            }
+            if (contadorProductos[nombreProd]) contadorProductos[nombreProd] -= cant;
+        });
+        ventas.splice(index, 1);
+        localStorage.setItem("ventas", JSON.stringify(ventas));
+        localStorage.setItem("inventario", JSON.stringify(inventario));
+        localStorage.setItem("contadorProductos", JSON.stringify(contadorProductos));
+        mostrarHistorialVentas(); 
+        actualizarTop();
+    }
+};
+
+window.agregarProducto = function() {
+    let nom = document.getElementById("nombre").value;
+    let pre = parseFloat(document.getElementById("precio").value);
+    let imgInput = document.getElementById("imagen");
