@@ -1,0 +1,15 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "BENDITO HELADO POS",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "BENDTIO HELADO",
+  "start_url": "/",
+  "theme_color": "#e91e63",
+  "description": "Sistema de punto de venta y control de ventas e inventario de Bendito Helado.",
+  "categories": [
+    "business"
+  ]
+}
