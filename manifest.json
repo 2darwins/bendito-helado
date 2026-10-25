@@ -1,3 +1,4 @@
+
 {
   "name": "Bendito Helado POS",
   "short_name": "Bendito Helado",
@@ -8,5 +9,17 @@
   "orientation": "any",
   "background_color": "#ffffff",
   "theme_color": "#e91e63",
-  "categories": ["business"]
+  "categories": ["business"],
+  "icons": [
+    {
+      "src": "/bendito-helado/icon-192%20(1).png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/bendito-helado/icon-512%20(1).png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
